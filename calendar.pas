@@ -79,7 +79,7 @@ const
    //-- @abstract(A constant denoting a null duration.)
    NULL_DURATION = Duration(0);
    //-- @abstract(The maximum duration representable.)
-   MAX_DURATION = Duration(High (Duration));
+   MAX_DURATION = High (Duration);
 
 const
    //-- @abstract(Absolute beginning of time. Big bang to say so.)
@@ -125,9 +125,7 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(A "simple" @italic(@code(delay until)) implementation.)
-//-- @param(Next       The  absolute  point  in  time  to  sleep  until.
-//--                   Usually   initialized  with  @code(Duration_Since
-//--                   (BIG_BANG) + Some_Interval).)
+//-- @param(Next       The absolute point in time to sleep until.)
 //-- @bold(NOTE): To be semantically correct, the whole operation should
 //--              be uninterruptible.  As this is close to impossible to
 //--              implement, do not trust the semantics too far.
@@ -144,7 +142,7 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 //--    Interval : Calendar.Duration;
 //-- begin
 //--    Interval := Calendar.Milliseconds (10);
-//--    Next     := Calendar.Duration_Since (Calendar.BIG_BANG) + Interval;
+//--    Next     := Calendar.Clock + Interval;
 //--
 //--    for i := Low (i) to High (i) do
 //--    begin
