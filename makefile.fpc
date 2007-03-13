@@ -1,0 +1,10 @@
+[package]
+name=stop-me
+version=0.0.2
+
+[require]
+packages=paszlib
+
+[target]
+programs=test_addie test_image test_lfsr
+units=addie calendar lfsr perf_image prng
