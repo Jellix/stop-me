@@ -35,6 +35,7 @@
 {                                                                      }
 {\====================================================================/}
 {$MODE OBJFPC}
+{$INLINE ON}
 
 //-- @abstract(Provides some stuff regarding relative times (duration).)
 unit
@@ -69,17 +70,28 @@ type
    //-- @abstract(The duration type.)
    //-- Should be handled as an opaque type.
    //-- To avoid drift issues and such stuff make it an integer.
-   Duration      = type Int64;
-   //-- @abstract(A discrete time type.)
+   Duration =
+   record
+      Value : Int64;
+   end {Duration};
+
+type
+   //-- @abstract(The absolute time type.)
+   //-- Should be handled as an opaque type.
+   Time =
+   record
+      Value : Int64;
+   end {Time};
+
+type
+   //-- @abstract(A general discrete time type.)
    //-- It  is  mainly  here  to  provide  some  more  clear  subroutine
    //-- interfaces.
    Discrete_Time = Int64;
 
 const
-   //-- @abstract(A constant denoting a null duration.)
-   NULL_DURATION = Duration(0);
    //-- @abstract(The maximum duration representable.)
-   MAX_DURATION = High (Duration);
+   MAX_DURATION = High (Int64);
 
 const
    //-- @abstract(Absolute beginning of time. Big bang to say so.)
@@ -99,6 +111,162 @@ type
                //-- Accuracy is in milliseconds.
                acMilliseconds);
 
+
+{ -- Operators to convert between the different types ---------------- }
+
+{/= "=" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two durations for equality.)
+//-- @returns(@code(True)  if  both  durations denote the same length in
+//--          time.)
+operator = (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+
+{/= "=" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two times for equality.)
+//-- @returns(@code(True)  if  the  arguments  denote  the same point in
+//--          time.)
+operator = (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+
+{/= "<" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two durations.)
+//-- @returns(@code(True) if the left operand denotes a shorter duration
+//--          than the right operand.)
+operator < (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+
+{/= "<" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two times.)
+//-- @returns(@code(True)  if  the  left operand denotes a point in time
+//--          earlier than the one of the right operand.)
+operator < (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+
+{/= "<=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two durations.)
+//-- @returns(@code(True)  if  @code(Left)  denotes  an equal or shorter
+//--          duration than @code(Right).)
+operator <= (const Left  : Duration;
+             const Right : Duration) : Boolean; inline;
+
+{/= "<=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two times.)
+//-- @returns(@code(True) if the @code(Left) denotes a point in time not
+//--          later than the one in @code(Right).)
+operator <= (const Left  : Time;
+             const Right : Time) : Boolean; inline;
+
+{/= ">" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two durations.)
+//-- @returns(@code(True)  if the left operand denotes a longer duration
+//--          than the right operand.)
+operator > (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+
+{/= ">" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two times.)
+//-- @returns(@code(True)  if  the  left operand denotes a point in time
+//--          later than the one of the right operand.)
+operator > (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+
+{/= ">=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two durations.)
+//-- @returns(@code(True) if the left operand denotes an equal or longer
+//--          duration than the right operand.)
+operator >= (const Left  : Duration;
+             const Right : Duration) : Boolean; inline;
+
+{/= ">=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Compares two times.)
+//-- @returns(@code(True)  if  the  left operand denotes a point in time
+//--          not earlier than the one of the right operand.)
+operator >= (const Left  : Time;
+             const Right : Time) : Boolean; inline;
+
+{/= "+" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Adds a duration to a point in time.)
+//-- @returns(A  new point in time with @code(Right) duration apart from
+//--          @code(Left).)
+operator + (const Left  : Time;
+            const Right : Duration) : Time; inline;
+
+{/= "+" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Adds a duration to a point in time.)
+//-- @returns(A  new  point in time with @code(Left) duration apart from
+//--          @code(Right).)
+operator + (const Left  : Duration;
+            const Right : Time) : Time; inline;
+
+{/= "+" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Adds up two durations.)
+//-- @returns(The sum of both operands as a single duration.)
+operator + (const Left  : Duration;
+            const Right : Duration) : Duration; inline;
+
+{/= "-" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Evaluates a duration between two times.)
+//-- @returns(The time distance between both operands.)
+operator - (const Left  : Time;
+            const Right : Time) : Duration; inline;
+
+{/= "-" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Subtracts a duration from a point in time.)
+//-- @returns(A  new point in time with @code(Right) duration apart from
+//--          @code(Left).)
+operator - (const Left  : Time;
+            const Right : Duration) : Time; inline;
+
+{/= "*" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Multiplies a single duration a given number of times.)
+//-- @returns(The duration @code(Left) multiplied by @code(Right).)
+operator * (const Left  : Int64;
+            const Right : Duration) : Duration; inline;
+
+{/= "/" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Divides a single duration by a given number of times.)
+//-- Despite  its name @code(/) this is an integer operation like @code(
+//-- div),  so  it  may  be  inaccurate.  Especially the equation @code(
+//-- Duration / x * x = Duration) may not hold true.
+//-- @returns(The duration @code(Left) divided by @code(Right).)
+operator / (const Left  : Duration;
+            const Right : Int64) : Duration; inline;
+
+
 { -- Base subroutines ------------------------------------------------ }
 
 {/= Clock ============================================================\}
@@ -106,9 +274,9 @@ type
 {\====================================================================/}
 //-- @abstract(Provides another system clock.)
 //-- @returns(The ticks gone since the @link(BIG_BANG).)
-//-- Due  to  the  mapping  on the @code(SysUtils.Now) stuff this is not
-//-- guaranteed to be very precise, but it may come in handy.
-function Clock : Duration;
+//-- Due to its current mapping on the @code(SysUtils.Now) stuff this is
+//-- not guaranteed to be very precise.
+function Clock : Time;
 
 {/= Duration_Since ===================================================\}
 {                                                                      }
@@ -125,7 +293,9 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(A "simple" @italic(@code(delay until)) implementation.)
-//-- @param(Next       The absolute point in time to sleep until.)
+//-- @param(Next       The  absolute  point  in  time  to  sleep  until.
+//--                   Usually    initialized    with    @code(Clock   +
+//--                   @italic(Some_Interval)).)
 //-- @bold(NOTE): To be semantically correct, the whole operation should
 //--              be uninterruptible.  As this is close to impossible to
 //--              implement, do not trust the semantics too far.
@@ -138,7 +308,7 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 //-- procedure Absolute_Delay;
 //-- var
 //--    i        : 1 .. 1000;
-//--    Next     : Calendar.Duration;
+//--    Next     : Calendar.Time;
 //--    Interval : Calendar.Duration;
 //-- begin
 //--    Interval := Calendar.Milliseconds (10);
@@ -151,7 +321,7 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 //--    end {for};
 //-- end {Absolute_Delay};
 //-- )
-procedure Sleep_Until (const Next : Duration);
+procedure Sleep_Until (const Next : Time);
 
 
 { -- Subroutines providing "constants" ------------------------------- }
@@ -165,6 +335,7 @@ procedure Sleep_Until (const Next : Duration);
 //--                   type.)
 //-- @returns(The duration of given number of days.)
 function Days (const Num_Days : Discrete_Time) : Duration;
+  overload;
 
 {/= Hours ============================================================\}
 {                                                                      }
@@ -175,6 +346,7 @@ function Days (const Num_Days : Discrete_Time) : Duration;
 //--                    duration type.)
 //-- @returns(The duration of given number of hours.)
 function Hours (const Num_Hours : Discrete_Time) : Duration;
+  overload;
 
 {/= Minutes ==========================================================\}
 {                                                                      }
@@ -185,6 +357,7 @@ function Hours (const Num_Hours : Discrete_Time) : Duration;
 //--                      duration type.)
 //-- @returns(The duration of given number of minutes.)
 function Minutes (const Num_Minutes : Discrete_Time) : Duration;
+  overload;
 
 {/= Seconds ==========================================================\}
 {                                                                      }
@@ -195,6 +368,7 @@ function Minutes (const Num_Minutes : Discrete_Time) : Duration;
 //--                      duration type.)
 //-- @returns(The duration of given number of seconds.)
 function Seconds (const Num_Seconds : Discrete_Time) : Duration;
+  overload;
 
 {/= Milliseconds =====================================================\}
 {                                                                      }
@@ -205,6 +379,7 @@ function Seconds (const Num_Seconds : Discrete_Time) : Duration;
 //--                    type.)
 //-- @returns(The duration of given number of milliseconds.)
 function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
+  overload;
 
 
 { -- Conversion subroutines ------------------------------------------ }
@@ -229,7 +404,7 @@ function To_Duration (const Date_Time : tDateTime) : Duration;
 function To_Time_Unit (const Time_Span : Duration;
                        const Time_Unit : Accuracy) : Discrete_Time;
 
-{/= To_Days ==========================================================\}
+{/= Days =============================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into rounded number of days.)
@@ -237,9 +412,10 @@ function To_Time_Unit (const Time_Span : Duration;
 //-- @returns(Number of days specified by the @code(Time_Span).)
 //-- This   is   a   convinience   function   using  @link(To_Time_Unit)
 //-- internally.
-function To_Days (const Time_Span : Duration) : Discrete_Time;
+function Days (const Time_Span : Duration) : Discrete_Time;
+  overload;
 
-{/= To_Hours =========================================================\}
+{/= Hours ============================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into rounded number of hours.)
@@ -247,9 +423,10 @@ function To_Days (const Time_Span : Duration) : Discrete_Time;
 //-- @returns(Number of hours specified by the @code(Time_Span).)
 //-- This   is   a   convinience   function   using  @link(To_Time_Unit)
 //-- internally.
-function To_Hours (const Time_Span : Duration) : Discrete_Time;
+function Hours (const Time_Span : Duration) : Discrete_Time;
+  overload;
 
-{/= To_Minutes =======================================================\}
+{/= Minutes ==========================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into rounded number of minutes.)
@@ -257,9 +434,11 @@ function To_Hours (const Time_Span : Duration) : Discrete_Time;
 //-- @returns(Number of minutes specified by the @code(Time_Span).)
 //-- This   is   a   convinience   function   using  @link(To_Time_Unit)
 //-- internally.
-function To_Minutes (const Time_Span : Duration) : Discrete_Time;
+function Minutes (const Time_Span : Duration) : Discrete_Time;
+  overload;
 
-{/= To_Seconds =======================================================\}
+
+{/= Seconds ==========================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into rounded number of seconds.)
@@ -267,9 +446,10 @@ function To_Minutes (const Time_Span : Duration) : Discrete_Time;
 //-- @returns(Number of seconds specified by the @code(Time_Span).)
 //-- This   is   a   convinience   function   using  @link(To_Time_Unit)
 //-- internally.
-function To_Seconds (const Time_Span : Duration) : Discrete_Time;
+function Seconds (const Time_Span : Duration) : Discrete_Time;
+  overload;
 
-{/= To_Milliseconds ==================================================\}
+{/= Milliseconds =====================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into rounded number of milliseconds.)
@@ -277,7 +457,21 @@ function To_Seconds (const Time_Span : Duration) : Discrete_Time;
 //-- @returns(Number of milliseconds specified by the @code(Time_Span).)
 //-- This   is   a   convinience   function   using  @link(To_Time_Unit)
 //-- internally.
-function To_Milliseconds (const Time_Span : Duration) : Discrete_Time;
+function Milliseconds (const Time_Span : Duration) : Discrete_Time;
+  overload;
+
+
+{/= Nanoseconds ======================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Converts a duration into number of nanoseconds.)
+//-- @param(Time_Span   The duration to convert.)
+//-- @returns(Number of nanoseconds specified by the @code(Time_Span).)
+//-- This  is  a  special  function to easify conversion.  It is neither
+//-- accurate,  because  nanoseconds  are  already  subresolution of the
+//-- @link(Duration) type, nor does there exist the usual counterpart of
+//-- converting nanoseconds into a duration type.
+function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
 
 
 { -- String (display) subroutines ------------------------------------ }
@@ -323,11 +517,151 @@ const
 
 const
    Durations : array[Accuracy] of Duration =
-      ({ Days        } TICKS_PER_DAY,
-       { Hours       } TICKS_PER_HOUR,
-       { Minutes     } TICKS_PER_MINUTE,
-       { Seconds     } TICKS_PER_SECOND,
-       { Millisecond } TICKS_PER_MILLISECOND);
+      ({ Days        } (Value : TICKS_PER_DAY),
+       { Hours       } (Value : TICKS_PER_HOUR),
+       { Minutes     } (Value : TICKS_PER_MINUTE),
+       { Seconds     } (Value : TICKS_PER_SECOND),
+       { Millisecond } (Value : TICKS_PER_MILLISECOND));
+
+
+{ -- Operators ------------------------------------------------------- }
+
+{/= "=" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator = (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+begin
+   exit (Left.Value = Right.Value);
+end {"="};
+
+operator = (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+begin
+   exit (Left.Value = Right.Value);
+end {"="};
+
+
+{/= "<" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator < (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+begin
+   exit (Left.Value < Right.Value);
+end {"<"};
+
+operator < (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+begin
+   exit (Left.Value < Right.Value);
+end {"<"};
+
+
+{/= "<=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator <= (const Left  : Duration;
+             const Right : Duration) : Boolean; inline;
+begin
+   exit (Left.Value <= Right.Value);
+end {"<="};
+
+operator <= (const Left  : Time;
+             const Right : Time) : Boolean; inline;
+begin
+   exit (Left.Value <= Right.Value);
+end {"<="};
+
+
+{/= ">" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator > (const Left  : Duration;
+            const Right : Duration) : Boolean; inline;
+begin
+   exit (Left.Value > Right.Value);
+end {">"};
+
+operator > (const Left  : Time;
+            const Right : Time) : Boolean; inline;
+begin
+   exit (Left.Value > Right.Value);
+end {">"};
+
+
+{/= ">=" =============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator >= (const Left  : Duration;
+             const Right : Duration) : Boolean; inline;
+begin
+   exit (Left.Value >= Right.Value);
+end {">="};
+
+operator >= (const Left  : Time;
+             const Right : Time) : Boolean; inline;
+begin
+   exit (Left.Value >= Right.Value);
+end {">="};
+
+
+{/= "+" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator + (const Left  : Time;
+            const Right : Duration) : Time; inline;
+begin
+   Result.Value := Left.Value + Right.Value;
+end {"+"};
+
+operator + (const Left  : Duration;
+            const Right : Time) : Time; inline;
+begin
+   Result.Value := Left.Value + Right.Value;
+end {"+"};
+
+operator + (const Left  : Duration;
+            const Right : Duration) : Duration; inline;
+begin
+   Result.Value := Left.Value + Right.Value;
+end {"+"};
+
+
+{/= "-" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator - (const Left  : Time;
+            const Right : Time) : Duration; inline;
+begin
+   Result.Value := Left.Value - Right.Value;
+end {"-"};
+
+operator - (const Left  : Time;
+            const Right : Duration) : Time; inline;
+begin
+   Result.Value := Left.Value - Right.Value;
+end {"-"};
+
+
+{/= "*" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator * (const Left  : Int64;
+            const Right : Duration) : Duration; inline;
+begin
+   Result.Value := Left * Right.Value;
+end {"*"};
+
+
+{/= "/" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+operator / (const Left  : Duration;
+            const Right : Int64) : Duration; inline;
+begin
+   Result.Value := Left.Value div Right;
+end {"/"};
 
 
 { -- Base subroutines ------------------------------------------------ }
@@ -335,9 +669,9 @@ const
 {/= Clock ============================================================\}
 {                                                                      }
 {\====================================================================/}
-function Clock : Duration;
+function Clock : Time;
 begin
-   exit (Duration_Since (BIG_BANG));
+   exit (Time(Duration_Since (BIG_BANG)));
 end {Clock};
 
 
@@ -346,22 +680,23 @@ end {Clock};
 {\====================================================================/}
 function Duration_Since (const Past_Time : tDateTime) : Duration;
 begin
-   exit (TICKS_PER_MILLISECOND *
-         DateUtils.MillisecondsBetween (Past_Time, SysUtils.Now));
+   Result.Value := TICKS_PER_MILLISECOND *
+                   DateUtils.MillisecondsBetween (Past_Time,
+                                                  SysUtils.Now);
 end {Duration_Since};
 
 
 {/= Sleep_Until ======================================================\}
 {                                                                      }
 {\====================================================================/}
-procedure Sleep_Until (const Next : Duration);
+procedure Sleep_Until (const Next : Time);
 var
-   Right_Now : Duration;
+   Right_Now : Time;
 begin
    Right_Now := Clock;
 
    if Right_Now < Next then
-      SysUtils.Sleep (To_Milliseconds (Next - Right_Now));
+      SysUtils.Sleep (Milliseconds (Next - Right_Now));
 end {Sleep_Until};
 
 
@@ -372,7 +707,7 @@ end {Sleep_Until};
 {\====================================================================/}
 function Days (const Num_Days : Discrete_Time) : Duration;
 begin
-   exit (Num_Days * TICKS_PER_DAY);
+   Result.Value := Num_Days * TICKS_PER_DAY;
 end {Days};
 
 
@@ -381,7 +716,7 @@ end {Days};
 {\====================================================================/}
 function Hours (const Num_Hours : Discrete_Time) : Duration;
 begin
-   exit (Num_Hours * TICKS_PER_HOUR);
+   Result.Value := Num_Hours * TICKS_PER_HOUR;
 end {Hours};
 
 
@@ -390,7 +725,7 @@ end {Hours};
 {\====================================================================/}
 function Minutes (const Num_Minutes : Discrete_Time) : Duration;
 begin
-   exit (Num_Minutes * TICKS_PER_MINUTE);
+   Result.Value := Num_Minutes * TICKS_PER_MINUTE;
 end {Minutes};
 
 
@@ -399,7 +734,7 @@ end {Minutes};
 {\====================================================================/}
 function Seconds (const Num_Seconds : Discrete_Time) : Duration;
 begin
-   exit (Num_Seconds * TICKS_PER_SECOND);
+   Result.Value := Num_Seconds * TICKS_PER_SECOND;
 end {Seconds};
 
 
@@ -408,7 +743,7 @@ end {Seconds};
 {\====================================================================/}
 function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
 begin
-   exit (Num_MSecs * TICKS_PER_MILLISECOND);
+   Result.Value := Num_MSecs * TICKS_PER_MILLISECOND;
 end {Milliseconds};
 
 
@@ -422,7 +757,7 @@ end {Milliseconds};
 //-- @returns(The "normalized" duration.)
 function To_Duration (const Date_Time : tDateTime) : Duration;
 begin
-   exit (Round (Date_Time * TICKS_PER_DAY));
+   Result.Value := Round (Date_Time * TICKS_PER_DAY);
 end {To_Duration};
 
 
@@ -432,53 +767,62 @@ end {To_Duration};
 function To_Time_Unit (const Time_Span : Duration;
                        const Time_Unit : Accuracy) : Discrete_Time;
 begin
-   exit (Round (1.0 * Time_Span / Durations[Time_Unit]));
+   exit (Round (1.0 * Time_Span.Value / Durations[Time_Unit].Value));
 end {To_Time_Unit};
 
 
-{/= To_Days ==========================================================\}
+{/= Days =============================================================\}
 {                                                                      }
 {\====================================================================/}
-function To_Days (const Time_Span : Duration) : Discrete_Time;
+function Days (const Time_Span : Duration) : Discrete_Time;
 begin
    exit (To_Time_Unit (Time_Span, acDays));
-end {To_Hours};
+end {Days};
 
 
-{/= To_Hours =========================================================\}
+{/= Hours ============================================================\}
 {                                                                      }
 {\====================================================================/}
-function To_Hours (const Time_Span : Duration) : Discrete_Time;
+function Hours (const Time_Span : Duration) : Discrete_Time;
 begin
    exit (To_Time_Unit (Time_Span, acHours));
-end {To_Hours};
+end {Hours};
 
 
-{/= To_Minutes =======================================================\}
+{/= Minutes ==========================================================\}
 {                                                                      }
 {\====================================================================/}
-function To_Minutes (const Time_Span : Duration) : Discrete_Time;
+function Minutes (const Time_Span : Duration) : Discrete_Time;
 begin
    exit (To_Time_Unit (Time_Span, acMinutes));
-end {To_Minutes};
+end {Minutes};
 
 
-{/= To_Seconds =======================================================\}
+{/= Seconds ==========================================================\}
 {                                                                      }
 {\====================================================================/}
-function To_Seconds (const Time_Span : Duration) : Discrete_Time;
+function Seconds (const Time_Span : Duration) : Discrete_Time;
 begin
    exit (To_Time_Unit (Time_Span, acSeconds));
-end {To_Seconds};
+end {Seconds};
 
 
-{/= To_Milliseconds ==================================================\}
+{/= Milliseconds =====================================================\}
 {                                                                      }
 {\====================================================================/}
-function To_Milliseconds (const Time_Span : Duration) : Discrete_Time;
+function Milliseconds (const Time_Span : Duration) : Discrete_Time;
 begin
    exit (To_Time_Unit (Time_Span, acMilliseconds));
-end {To_Milliseconds};
+end {Milliseconds};
+
+
+{/= Nanoseconds ======================================================\}
+{                                                                      }
+{\====================================================================/}
+function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
+begin
+   exit (Time_Span.Value * (1000 div TICKS_PER_MILLISECOND) * 1000);
+end {Nanoseconds};
 
 
 { -- String (display) subroutines ------------------------------------ }
@@ -506,7 +850,7 @@ var
    My_Duration : tDateTime;
 begin
    // Convert it to tDateTime for convinience and adjust for rounding.
-   My_Duration := Abs (1.0 * Time_Span / TICKS_PER_DAY) +
+   My_Duration := Abs (1.0 * Time_Span.Value / TICKS_PER_DAY) +
                   Round_Adjust[Time_Unit];
 
    // Days are the largest stuff we support.
@@ -537,4 +881,3 @@ end {Image};
 end {Calendar}.
 
 $Id$
-

@@ -192,7 +192,7 @@ end {Monitor_Task.Create};
 {\====================================================================/}
 procedure Monitor_Task.Execute;
 var
-   Next_Time : Calendar.Duration;
+   Next_Time : Calendar.Time;
 begin
    // Set up next time trigger first.
    Next_Time := Calendar.Clock + self.Sample_Cycle;
