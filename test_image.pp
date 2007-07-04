@@ -38,7 +38,7 @@
 
 program
    Test_Image;
-   
+
 uses
    {$IFDEF UNIX} CThreads, {$ENDIF UNIX}
    Addie,
@@ -49,7 +49,8 @@ uses
    SysUtils;
 
 const
-   ADDIE_BITS = 10;
+   ADDIE_BITS  = 10;
+   DATA_POINTS = 1000;
 
 procedure Run;
 var
@@ -61,13 +62,13 @@ begin
    My_Addie := Addie.tAddie.Create (LFSR.tRandom_64, ADDIE_BITS);
    Perf_Img := Perf_Image.Performance_Graph.Create (My_Addie);
    Perf_Img.Start (Calendar.Milliseconds (10));
-   
-   for i := 0 to 1000 do
+
+   for i := 0 to Pred (DATA_POINTS) do
    begin
       My_Addie.Feed (Random > 0.9);
       SysUtils.Sleep (1);
    end {for};
-   
+
    Perf_Img.Stop;
    My_Stream := Classes.tFileStream.Create ('test_image.png',
                                             Classes.fmCreate);
