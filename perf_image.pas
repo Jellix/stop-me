@@ -119,7 +119,9 @@ implementation
 uses
    Math,
    SysUtils,
+   FPCanvas,
    FPImage,
+   FPImgCanv,
    FPWritePNG;
 
 
@@ -265,204 +267,40 @@ end {Performance_Graph.Stop};
 {\====================================================================/}
 procedure Performance_Graph.Create_Image (
       const Img_Data : Classes.tStream);
+var
+   Canvas : FPCanvas.tFPCustomCanvas;
+   Img    : FPImage.tFPCustomImage;
 
-   {/= Line =======================================================\}
-   {                                                                }
-   {\==============================================================/}
-   procedure Line (const Img : FPImage.tFPCustomImage;
-                         X0  : Double;
-                         Y0  : Double;
-                         X1  : Double;
-                         Y1  : Double);
+   {/= Draw_Rule =====================================================\}
+   {                                                                   }
+   {\=================================================================/}
+   procedure Draw_Rule (const Col_Index : Integer;
+                        const Lower     : Integer;
+                        const Upper     : Integer);
+   begin
+      Canvas.Pen.FPColor := Img.Palette[Col_Index];
+      Canvas.Line (0,                (Lower + Upper) div 2,
+                   Pred (Img.Width), (Lower + Upper) div 2);
 
-      {/= Plot ====================================================\}
-      {                                                             }
-      {\===========================================================/}
-      procedure Plot (const X : Integer;
-                      const Y : Integer;
-                      const C : Double);
-      var
-         New_C : Double;
+      if Col_Index > 32 then
       begin
-         New_C := Math.Min (1.0, Img.Pixels[X, Y] / 255.0 + C);
-         Img.Pixels[X, Y] := Round (255.0 * New_C);
-      end {Plot};
-
-   var
-      DeltaX : Double;
-      DeltaY : Double;
-      Dir    : Integer;
-   begin // Line
-      // procedure WuLine(fixpt x1, fixpt y1, fixpt x2, fixpt y2)
-      // variable declarations:
-      // fixpt variables:
-      //    grad, xd, yd, length,xm,ym
-      //    xgap, ygap, xend, yend, xf, yf
-      //    brightness1, brightness2
-      //
-      // integer variables:
-      //    x, y, ix1, ix2, iy1, iy2
-      //
-      // byte variables:
-      //    c1, c2
-      //
-      // code starts here:
-      //
-      // Width and Height of the line
-      // xd = (x2-x1)
-      // yd = (y2-y1)
-      //
-      //
-      // if abs(xd) > abs(yd) then  check line gradient
-      //    horizontal(ish) lines
-      //
-      //    if x1 > x2 then      if line is back to front
-      //       swap x1 and x2    then swap it round
-      //       swap y1 and y2
-      //       xd = (x2-x1)      and recalc xd & yd
-      //       yd = (y2-y1)
-      //    end if
-      //
-      //    grad = yd/xd         gradient of the line
-      //
-      //
-      //    End Point 1
-      //    -----------
-      //
-      //    xend = trunc(x1+.5)        find nearest integer X-coordinate
-      //    yend = y1 + grad*(xend-x1) and corresponding Y value
-      //
-      //    xgap = invfrac(x1+.5)      distance i
-      //
-      //    ix1  = int(xend)           calc screen coordinates
-      //    iy1  = int(yend)
-      //
-      //    brightness1 = invfrac(yend) * xgap  calc the intensity of the other
-      //    brightness2 =    frac(yend) * xgap  end point pixel pair.
-      //
-      //    c1 = byte(brightness1 * MaxPixelValue) calc pixel values
-      //    c2 = byte(brightness2 * MaxPixelValue)
-      //
-      //    DrawPixel(ix1,iy1), c1     draw the pair of pixels
-      //    DrawPixel(ix1,iy1+1), c2
-      //
-      //    yf = yend+grad    calc first Y-intersection for main loop
-      //
-      //    End Point 2
-      //    -----------
-      //
-      //    xend = trunc(x2+.5)        find nearest integer X-coordinate
-      //    yend = y2 + grad*(xend-x2) and corresponding Y value
-      //
-      //    xgap = invfrac(x2-.5)   distance i
-      //
-      //    ix2  = int(xend)  calc screen coordinates
-      //    iy2  = int(yend)
-      //
-      //    brightness1 = invfrac(yend) * xgap  calc the intensity of the first
-      //    brightness2 =    frac(yend) * xgap  end point pixel pair.
-      //
-      //    c1 = byte(brightness1 * MaxPixelValue)    calc pixel values
-      //    c2 = byte(brightness2 * MaxPixelValue)
-      //
-      //    DrawPixel(ix2,iy2), c1     draw the pair of pixels
-      //    DrawPixel(ix2,iy2+1), c2
-      //
-      //    MAIN LOOP
-      //    ---------
-      //
-      //    Loop x from (ix1+1) to (ix2-1)   main loop
-      //
-      //       brightness1 = invfrac(yf)  calc pixel brightnesses
-      //       brightness2 = frac(yf)
-      //
-      //       c1 = byte(brightness1 * MaxPixelValue)    calc pixel values
-      //       c2 = byte(brightness2 * MaxPixelValue)
-      //
-      //       DrawPixel(x,int(yf)), c1   draw the pair of pixels
-      //       DrawPixel(x,int(yf)+1), c2
-      //
-      //       yf = yf + grad    update the y-coordinate
-      //
-      //    end of x loop  end of loop
-      //
-      // else
-      //    vertical(ish) lines
-      //    handle the vertical(ish) lines in the
-      //    ame way as the horizontal(ish) ones
-      //    but swap the roles of X and Y
-      // end if
-      // end of procedure
-
-      while (X0 <> X1) or (Y0 <> Y1) do
-      begin
-         DeltaX := Abs (X1 - X0);
-         DeltaY := Abs (Y1 - Y0);
-
-         if DeltaX > DeltaY then
-         begin
-            // X slope.
-            if X1 < X0 then
-               Dir := -1
-            else
-               Dir := 1;
-
-            Plot (Trunc (X0),       Trunc (Y0), 1.0 - Frac (Y0));
-            Plot (Trunc (X0) + Dir, Trunc (Y0), Frac (Y0));
-            X0 := X0 + Dir;
-
-            if Dir < 0 then
-            begin
-               if X0 < X1 then
-                  X0 := X1;
-            end {if}
-            else
-            begin
-               if X0 > X1 then
-                  X0 := X1;
-            end {else};
-         end {if}
-         else
-         begin
-            // Y slope.
-            if Y1 < Y0 then
-               Dir := -1
-            else
-               Dir := 1;
-
-            Plot (Trunc (X0), Trunc (Y0),       1.0 - Frac (X0));
-            Plot (Trunc (X0), Trunc (Y0) + Dir, Frac (X0));
-            Y0 := Y0 + Dir;
-
-            if Dir < 0 then
-            begin
-               if Y0 < Y1 then
-                  Y0 := Y1;
-            end {if}
-            else
-            begin
-               if Y0 > Y1 then
-                  Y0 := Y1;
-            end {else};
-         end {else};
-      end {while};
-   end {Line};
+         Draw_Rule (Col_Index div 2, Lower, (Lower + Upper) div 2);
+         Draw_Rule (Col_Index div 2, (Lower + Upper) div 2, Upper);
+      end {if};
+   end {Draw_Rule};
 
 var
-   Img         : FPImage.tFPCustomImage;
    Img_Writer  : FPImage.tFPCustomImageWriter;
    Col         : FPImage.tFPColor;
    Data_Points : Integer;
    i           : Integer;
    x           : Integer;
-   Prev_Y      : Double;
-   Cur_Y       : Double;
-begin
+   Y           : Integer;
+begin // Performance_Graph.Create_Image
    Data_Points := self.Perf_Data.Count;
 
    Img := FPImage.tFPMemoryImage.Create (Data_Points,
                                          2**self.My_Addie.Bits);
-
    Img.Palette.Count := 256;
 
    for i := 0 to Pred (Img.Palette.Count) do
@@ -474,25 +312,30 @@ begin
       Img.Palette[Img.Palette.Count - 1 - i] := Col;
    end {for};
 
-   // Draw horizontal line.
-   for i := 0 to Img.Width - 1 do
-      Img.Pixels[i, Succ (Img.Height) div 2] := 255;
+   Canvas := FPImgCanv.tFPImageCanvas.Create (Img);
 
-   Prev_Y := (1.0 - Data_Point(self.Perf_Data[0]).What) *
-                   Pred (Img.Height);
+   Canvas.Pen.Mode    := FPCanvas.pmBlack;
+   Canvas.Pen.Width   := 1;
+
+   Canvas.Pen.Style   := FPCanvas.psDot;
+   Draw_Rule (Img.Palette.Count div 2, 0, Pred (Img.Height));
+
+   Canvas.Pen.FPColor := FPImage.colBlack;
+   Canvas.Pen.Style   := FPCanvas.psSolid;
+   Canvas.MoveTo (0, Img.Height div 2);
 
    for x := 0 to Pred (Data_Points) do
    begin
-      Cur_Y := (1.0 - Data_Point(self.Perf_Data[x]).What) *
-               Pred (Img.Height);
-      Line (Img, Max (0, Pred (x)), Prev_Y, x, Cur_Y);
-      Prev_Y := Cur_Y;
+      Y := Trunc ((1.0 - Data_Point(self.Perf_Data[x]).What) *
+                  Pred (Img.Height) + 0.5);
+      Canvas.LineTo (x, Y);
    end {for};
 
    Img_Writer := FPWritePNG.tFPWriterPNG.Create;
    Img.SaveToStream (Img_Data, Img_Writer);
    Img_Writer.Free;
 
+   Canvas.Free;
    Img.Free;
 end {Performance_Graph.Stop};
 
