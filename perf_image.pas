@@ -273,6 +273,11 @@ var
 
    {/= Draw_Rule =====================================================\}
    {                                                                   }
+   { Recursive rule drawer. Not used anymore.                          }
+   {                                                                   }
+   { Would   draw  [50%, [25%, [12.5%, 37.5%]], [75%, [62.5%, 87.5%]]] }
+   { and so on lines in ever lighter grayscale.                        }
+   {                                                                   }
    {\=================================================================/}
    procedure Draw_Rule (const Col_Index : Integer;
                         const Lower     : Integer;
@@ -282,12 +287,41 @@ var
       Canvas.Line (0,                (Lower + Upper) div 2,
                    Pred (Img.Width), (Lower + Upper) div 2);
 
-      if Col_Index > 32 then
+      // Break  out  of  recursion  if  color is too light or the pixel
+      // distance between the lines becomes too small.
+      if (Col_Index > 16) and ((Upper - Lower) > 8) then
       begin
          Draw_Rule (Col_Index div 2, Lower, (Lower + Upper) div 2);
          Draw_Rule (Col_Index div 2, (Lower + Upper) div 2, Upper);
       end {if};
    end {Draw_Rule};
+
+   {/= Draw_Y_Axis ===================================================\}
+   {                                                                   }
+   { Draws the main Y axis at 50% and some lighter ones at 10% steps.  }
+   {                                                                   }
+   {\=================================================================/}
+   procedure Draw_Y_Axis (Main_Axis_Color : Integer;
+                          Sub_Axis_Color  : Integer);
+   var
+      i : Integer;
+      y : Integer;
+   begin
+      Canvas.Pen.Style   := FPCanvas.psDot;
+      Canvas.Pen.fpColor := Img.Palette[Sub_Axis_Color];
+
+      // Draw 10% rules.
+      for i := 0 to 10 do
+      begin
+         y := Trunc ((0.1 * i) * Pred (Img.Height));
+         Canvas.Line (0, y, Pred (Img.Width), y);
+      end {for};
+                   
+      // Draw 50% rule.
+      Canvas.Pen.fpColor := Img.Palette[Main_Axis_Color];
+      y := Pred (Img.Height) div 2;
+      Canvas.Line (0, y, Pred (Img.Width), y);
+   end {Draw_Y_Axis};
 
 var
    Img_Writer  : FPImage.tFPCustomImageWriter;
@@ -295,48 +329,56 @@ var
    Data_Points : Integer;
    i           : Integer;
    x           : Integer;
-   Y           : Integer;
+   y           : Integer;
 begin // Performance_Graph.Create_Image
    Data_Points := self.Perf_Data.Count;
 
    Img := FPImage.tFPMemoryImage.Create (Data_Points,
                                          2**self.My_Addie.Bits);
-   Img.Palette.Count := 256;
-
-   for i := 0 to Pred (Img.Palette.Count) do
-   begin
-      Col.Red   := Round (65535.0 * i / Pred (Img.Palette.Count));
-      Col.Green := Col.Red;
-      Col.Blue  := Col.Red;
-      Col.Alpha := FPImage.AlphaOpaque;
-      Img.Palette[Img.Palette.Count - 1 - i] := Col;
-   end {for};
-
    Canvas := FPImgCanv.tFPImageCanvas.Create (Img);
 
-   Canvas.Pen.Mode    := FPCanvas.pmBlack;
-   Canvas.Pen.Width   := 1;
+   try
+      Img.Palette.Count := 256;
 
-   Canvas.Pen.Style   := FPCanvas.psDot;
-   Draw_Rule (Img.Palette.Count div 2, 0, Pred (Img.Height));
+      for i := 0 to Pred (Img.Palette.Count) do
+      begin
+         Col.Red   := Round (65535.0 * i / Pred (Img.Palette.Count));
+         Col.Green := Col.Red;
+         Col.Blue  := Col.Red;
+         Col.Alpha := FPImage.AlphaOpaque;
+         Img.Palette[Img.Palette.Count - 1 - i] := Col;
+      end {for};
 
-   Canvas.Pen.FPColor := FPImage.colBlack;
-   Canvas.Pen.Style   := FPCanvas.psSolid;
-   Canvas.MoveTo (0, Img.Height div 2);
+      Canvas.Pen.Mode  := FPCanvas.pmBlack;
+      Canvas.Pen.Width := 1;
 
-   for x := 0 to Pred (Data_Points) do
-   begin
-      Y := Trunc ((1.0 - Data_Point(self.Perf_Data[x]).What) *
-                  Pred (Img.Height) + 0.5);
-      Canvas.LineTo (x, Y);
-   end {for};
+      Draw_Y_Axis (Img.Palette.Count div 2, Img.Palette.Count div 4);
+      
+      // Draw  the  data  lines.  An improved version would use antialiased
+      // line drawings.
+      Canvas.Pen.FPColor := Img.Palette[Pred (Img.Palette.Count)];
+      Canvas.Pen.Style   := FPCanvas.psSolid;
+      Canvas.MoveTo (0, Img.Height div 2);
 
-   Img_Writer := FPWritePNG.tFPWriterPNG.Create;
-   Img.SaveToStream (Img_Data, Img_Writer);
-   Img_Writer.Free;
+      for x := 0 to Pred (Data_Points) do
+      begin
+         y := Trunc ((1.0 - Data_Point(self.Perf_Data[x]).What) *
+                     Pred (Img.Height) + 0.5);
+         Canvas.LineTo (x, y);
+      end {for};
 
-   Canvas.Free;
-   Img.Free;
+      // Finally create the .png image.
+      Img_Writer := FPWritePNG.tFPWriterPNG.Create;
+      
+      try
+         Img.SaveToStream (Img_Data, Img_Writer);
+      finally
+         Img_Writer.Free;
+      end {try};
+   finally
+      Canvas.Free;
+      Img.Free;
+   end {try};
 end {Performance_Graph.Stop};
 
 
