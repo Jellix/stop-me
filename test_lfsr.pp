@@ -42,14 +42,17 @@ uses
    SysUtils;
 
 var
-   R1 : LFSR.tRandom_64;
+   R1     : LFSR.tRandom_64;
+   Result : QWord;
 
 begin
    R1 := LFSR.tRandom_64.Create;
 
    while True do
    begin
-      WriteLn (Sysutils.IntToHex (R1.Next, 2 * SizeOf (R1.Next)) : 20);
+      Result := R1.Next;
+      WriteLn (SysUtils.IntToHex (Int64(Result),
+                                  2 * SizeOf (Result)) : 20);
    end {while};
 
    R1.Free;
