@@ -436,8 +436,9 @@ function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
 {\====================================================================/}
 //-- @abstract(Translates  a  given  number  of  microseconds  into  our
 //--           duration type.)
-//-- Because  microseconds already is below the internal used resolution
-//-- the result of the operation is not guaranteed to be accurate.
+//-- Because   microseconds   already  are  below  the  internally  used
+//-- resolution,  the  result  of  the operation is not guaranteed to be
+//-- accurate.
 //-- @param(Num_USecs   The  number of microseconds to be converted to a
 //--                    duration type.)
 //-- @returns(The duration of given number of microseconds.)
@@ -450,8 +451,9 @@ function Microseconds (const Num_USecs : Discrete_Time) : Duration;
 {\====================================================================/}
 //-- @abstract(Translates   a  given  number  of  nanoseconds  into  our
 //--           duration type.)
-//-- Because  nanoseconds  already is below the internal used resolution
-//-- the result of the operation is not guaranteed to be accurate.
+//-- Because   nanoseconds   already   are  below  the  internally  used
+//-- resolution  the  result  of  the  operation is not guaranteed to be
+//-- accurate.
 //-- @param(Num_NSecs   The  number  of nanoseconds to be converted to a
 //--                    duration type.)
 //-- @returns(The duration of given number of nanoseconds.)
@@ -544,9 +546,6 @@ function Milliseconds (const Time_Span : Duration) : Discrete_Time;
 //-- @abstract(Converts a duration into number of microseconds.)
 //-- @param(Time_Span   The duration to convert.)
 //-- @returns(Number of microseconds specified by the @code(Time_Span).)
-//-- This  is a special function to easify conversion.  For that reason,
-//-- the  usual  counterpart  of converting microseconds into a duration
-//-- type does @italic(not) exist.
 function Microseconds (const Time_Span : Duration) : Discrete_Time;
   overload;
 
@@ -557,9 +556,6 @@ function Microseconds (const Time_Span : Duration) : Discrete_Time;
 //-- @abstract(Converts a duration into number of nanoseconds.)
 //-- @param(Time_Span   The duration to convert.)
 //-- @returns(Number of nanoseconds specified by the @code(Time_Span).)
-//-- This  is a special function to easify conversion.  For that reason,
-//-- the  usual  counterpart  of  converting nanoseconds into a duration
-//-- type (which would be inaccurate anyway) does @italic(not) exist.
 function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
   overload;
 
@@ -916,9 +912,6 @@ end {Nanoseconds};
 {/= To_Duration ======================================================\}
 {                                                                      }
 {\====================================================================/}
-//-- @abstract(Converts a @code(tDateTime) value into a duration.)
-//-- @param(Date_Time   The value to convert.)
-//-- @returns(The "normalized" duration.)
 function To_Duration (const Date_Time : tDateTime) : Duration;
 begin
    Result.Value := Round (Date_Time * TICKS_PER_DAY);
