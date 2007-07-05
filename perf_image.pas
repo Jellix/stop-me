@@ -307,27 +307,53 @@ var
       i : Integer;
       y : Integer;
    begin
-      Canvas.Pen.Style   := FPCanvas.psDot;
+      // General settings.
+      Canvas.Pen.Mode  := FPCanvas.pmCopy;
+      Canvas.Pen.Style := FPCanvas.psDot;
+      Canvas.Pen.Width := 1;
+
+      // Draw 10% rules with light color.
       Canvas.Pen.fpColor := Img.Palette[Sub_Axis_Color];
 
-      // Draw 10% rules.
       for i := 0 to 10 do
       begin
          y := Trunc ((0.1 * i) * Pred (Img.Height));
          Canvas.Line (0, y, Pred (Img.Width), y);
       end {for};
-                   
-      // Draw 50% rule.
+
+      // Draw 50% rule with medium color.
       Canvas.Pen.fpColor := Img.Palette[Main_Axis_Color];
+
       y := Pred (Img.Height) div 2;
       Canvas.Line (0, y, Pred (Img.Width), y);
    end {Draw_Y_Axis};
 
+   {/= Set_Grayscale_Palette =========================================\}
+   {                                                                   }
+   {\=================================================================/}
+   procedure Set_Greyscale_Palette (out Palette : FPImage.tFPPalette);
+   var
+      Col : FPImage.tFPColor;
+      i   : Integer;
+      Max : Integer; // Just to optimize those "Pred (Palette.Count)"s.
+   begin
+      Palette.Count := 256;
+      Max := Pred (Palette.Count);
+
+      for i := 0 to Pred (Palette.Count) do
+      begin
+         Col.Red   := Round (65535.0 * i / Max);
+         Col.Green := Col.Red;
+         Col.Blue  := Col.Red;
+         Col.Alpha := FPImage.AlphaOpaque;
+
+         Palette[Max - i] := Col;
+      end {for};
+   end {Set_Grayscale_Palette};
+
 var
    Img_Writer  : FPImage.tFPCustomImageWriter;
-   Col         : FPImage.tFPColor;
    Data_Points : Integer;
-   i           : Integer;
    x           : Integer;
    y           : Integer;
 begin // Performance_Graph.Create_Image
@@ -338,26 +364,17 @@ begin // Performance_Graph.Create_Image
    Canvas := FPImgCanv.tFPImageCanvas.Create (Img);
 
    try
-      Img.Palette.Count := 256;
-
-      for i := 0 to Pred (Img.Palette.Count) do
-      begin
-         Col.Red   := Round (65535.0 * i / Pred (Img.Palette.Count));
-         Col.Green := Col.Red;
-         Col.Blue  := Col.Red;
-         Col.Alpha := FPImage.AlphaOpaque;
-         Img.Palette[Img.Palette.Count - 1 - i] := Col;
-      end {for};
-
-      Canvas.Pen.Mode  := FPCanvas.pmBlack;
-      Canvas.Pen.Width := 1;
+      Set_Greyscale_Palette (Img.Palette);
 
       Draw_Y_Axis (Img.Palette.Count div 2, Img.Palette.Count div 4);
-      
-      // Draw  the  data  lines.  An improved version would use antialiased
-      // line drawings.
-      Canvas.Pen.FPColor := Img.Palette[Pred (Img.Palette.Count)];
+
+      // Draw the data lines.  An improved version would use antialiased
+      // line drawing.
+      Canvas.Pen.fpColor := Img.Palette[Pred (Img.Palette.Count)];
+      Canvas.Pen.Mode    := FPCanvas.pmCopy;
       Canvas.Pen.Style   := FPCanvas.psSolid;
+      Canvas.Pen.Width   := 1;
+
       Canvas.MoveTo (0, Img.Height div 2);
 
       for x := 0 to Pred (Data_Points) do
@@ -369,7 +386,7 @@ begin // Performance_Graph.Create_Image
 
       // Finally create the .png image.
       Img_Writer := FPWritePNG.tFPWriterPNG.Create;
-      
+
       try
          Img.SaveToStream (Img_Data, Img_Writer);
       finally
