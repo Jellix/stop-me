@@ -36,8 +36,12 @@
 {\====================================================================/}
 {$MODE OBJFPC}
 {$INLINE ON}
+{.$DEFINE USE_LIBC}
 
 //-- @abstract(Provides some stuff regarding relative times (duration).)
+//-- Although it may appear otherwise, the accuracy of operations is not
+//-- guaranteed to sub-milliseconds.  Usage of the micro- and even nano-
+//-- seconds function should be done with extreme care.
 unit
    Calendar;
 
@@ -49,10 +53,19 @@ uses
    SysUtils;
 
 
-// seconds based time definitions
+// -- Seconds based time definitions. --
+
+// Subsecond values.
 const
    //-- Milliseconds per unity second.
-   MS_PER_SECOND      = SysUtils.MSecsPerSec;
+   MS_PER_SECOND = SysUtils.MSecsPerSec;
+   //-- Microseconds per unity second.
+   US_PER_SECOND = 1000 * SysUtils.MSecsPerSec;
+   //-- Nanoseconds per unity seconds.
+   NS_PER_SECOND = 1000 * US_PER_SECOND;
+
+// Supersecond values.
+const
    //-- Number of unity seconds in a minute.
    SECONDS_PER_MINUTE = SysUtils.SecsPerMin;
    //-- Number of minutes in an hour.
@@ -93,10 +106,6 @@ const
    //-- @abstract(The maximum duration representable.)
    MAX_DURATION = High (Int64);
 
-const
-   //-- @abstract(Absolute beginning of time. Big bang to say so.)
-   BIG_BANG = tDateTime(0.0);
-
 type
    //-- @abstract(The   accuracy  needed  or  used  in  time  conversion
    //--           subroutines.)
@@ -109,7 +118,11 @@ type
                //-- Accuracy rounded to full seconds.
                acSeconds,
                //-- Accuracy is in milliseconds.
-               acMilliseconds);
+               acMilliseconds,
+               //-- Accuracy is in microseconds. DO NOT USE SERIOUSLY!
+               acMicroseconds,
+               //-- Accuracy is in nanoseconds. DO NOT USE SERIOUSLY!
+               acNanoseconds);
 
 
 { -- Operators to convert between the different types ---------------- }
@@ -247,6 +260,14 @@ operator - (const Left  : Time;
 operator - (const Left  : Time;
             const Right : Duration) : Time; inline;
 
+{/= "-" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Evaluates the difference between two durations.)
+//-- @returns(The difference between two durations as duration.)
+operator - (const Left  : Duration;
+            const Right : Duration) : Duration; inline;
+
 {/= "*" ==============================================================\}
 {                                                                      }
 {\====================================================================/}
@@ -254,6 +275,14 @@ operator - (const Left  : Time;
 //-- @returns(The duration @code(Left) multiplied by @code(Right).)
 operator * (const Left  : Int64;
             const Right : Duration) : Duration; inline;
+
+{/= "*" ==============================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Multiplies a single duration a given number of times.)
+//-- @returns(The duration @code(Right) multiplied by @code(Left).)
+operator * (const Left  : Duration;
+            const Right : Int64) : Duration; inline;
 
 {/= "/" ==============================================================\}
 {                                                                      }
@@ -273,9 +302,13 @@ operator / (const Left  : Duration;
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Provides another system clock.)
-//-- @returns(The ticks gone since the @link(BIG_BANG).)
-//-- Due to its current mapping on the @code(SysUtils.Now) stuff this is
-//-- not guaranteed to be very precise.
+//-- Neither  the  resolution  of the clock nor the actual point in time
+//-- described  by  @link(ZERO_TIME) is somehow guaranteed.  At least do
+//-- not  expect  anything  better  than a millisecond resolution.  Just
+//-- assume  the  clock's  precision is nothing more than that of @code(
+//-- SysUtils.Now).
+//-- @returns(A  number  of  ticks  gone since some unspecified starting
+//--          point.)
 function Clock : Time;
 
 {/= Duration_Since ===================================================\}
@@ -294,8 +327,8 @@ function Duration_Since (const Past_Time : tDateTime) : Duration;
 {\====================================================================/}
 //-- @abstract(A "simple" @italic(@code(delay until)) implementation.)
 //-- @param(Next       The  absolute  point  in  time  to  sleep  until.
-//--                   Usually    initialized    with    @code(Clock   +
-//--                   @italic(Some_Interval)).)
+//--                   Usually   initialized  with  @italic(@code(@link(
+//--                   Clock) + Some_Interval)).)
 //-- @bold(NOTE): To be semantically correct, the whole operation should
 //--              be uninterruptible.  As this is close to impossible to
 //--              implement, do not trust the semantics too far.
@@ -325,6 +358,22 @@ procedure Sleep_Until (const Next : Time);
 
 
 { -- Subroutines providing "constants" ------------------------------- }
+
+{/= ZERO_DURATION ====================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(A zero duration constant.)
+//-- Disguised  as  function  so it can be used in dynamic contexts like
+//-- comparisons. Generally equivalent to @code(Duration(0)).
+function ZERO_DURATION : Duration; inline;
+
+{/= ZERO_TIME ========================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(A zero time constant.)
+//-- Disguised  as  function  so it can be used in dynamic contexts like
+//-- comparisons. Generally equivalent to @code(Time(0)).
+function ZERO_TIME : Time; inline;
 
 {/= Days =============================================================\}
 {                                                                      }
@@ -375,10 +424,38 @@ function Seconds (const Num_Seconds : Discrete_Time) : Duration;
 {\====================================================================/}
 //-- @abstract(Translates  a  given  number  of  milliseconds  into  our
 //--           duration type.)
-//-- @param(Num_MSecs   The number of days to be converted to a duration
-//--                    type.)
+//-- @param(Num_MSecs   The  number of milliseconds to be converted to a
+//--                    duration type.)
 //-- @returns(The duration of given number of milliseconds.)
 function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
+  overload;
+
+
+{/= Microseconds =====================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Translates  a  given  number  of  microseconds  into  our
+//--           duration type.)
+//-- Because  microseconds already is below the internal used resolution
+//-- the result of the operation is not guaranteed to be accurate.
+//-- @param(Num_USecs   The  number of microseconds to be converted to a
+//--                    duration type.)
+//-- @returns(The duration of given number of microseconds.)
+function Microseconds (const Num_USecs : Discrete_Time) : Duration;
+  overload;
+
+
+{/= Nanoseconds ======================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Translates   a  given  number  of  nanoseconds  into  our
+//--           duration type.)
+//-- Because  nanoseconds  already is below the internal used resolution
+//-- the result of the operation is not guaranteed to be accurate.
+//-- @param(Num_NSecs   The  number  of nanoseconds to be converted to a
+//--                    duration type.)
+//-- @returns(The duration of given number of nanoseconds.)
+function Nanoseconds (const Num_NSecs : Discrete_Time) : Duration;
   overload;
 
 
@@ -461,17 +538,30 @@ function Milliseconds (const Time_Span : Duration) : Discrete_Time;
   overload;
 
 
+{/= Microseconds =====================================================\}
+{                                                                      }
+{\====================================================================/}
+//-- @abstract(Converts a duration into number of microseconds.)
+//-- @param(Time_Span   The duration to convert.)
+//-- @returns(Number of microseconds specified by the @code(Time_Span).)
+//-- This  is a special function to easify conversion.  For that reason,
+//-- the  usual  counterpart  of converting microseconds into a duration
+//-- type does @italic(not) exist.
+function Microseconds (const Time_Span : Duration) : Discrete_Time;
+  overload;
+
+
 {/= Nanoseconds ======================================================\}
 {                                                                      }
 {\====================================================================/}
 //-- @abstract(Converts a duration into number of nanoseconds.)
 //-- @param(Time_Span   The duration to convert.)
 //-- @returns(Number of nanoseconds specified by the @code(Time_Span).)
-//-- This  is  a  special  function to easify conversion.  It is neither
-//-- accurate,  because  nanoseconds  are  already  subresolution of the
-//-- @link(Duration) type, nor does there exist the usual counterpart of
-//-- converting nanoseconds into a duration type.
+//-- This  is a special function to easify conversion.  For that reason,
+//-- the  usual  counterpart  of  converting nanoseconds into a duration
+//-- type (which would be inaccurate anyway) does @italic(not) exist.
 function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
+  overload;
 
 
 { -- String (display) subroutines ------------------------------------ }
@@ -479,8 +569,8 @@ function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
 {/= Image ============================================================\}
 {                                                                      }
 {\====================================================================/}
-//-- @abstract(Converts  a  given  number  of milliseconds into a string
-//--           representation with a given accuracy.)
+//-- @abstract(Converts  a  given  duration into a string representation
+//--           with a given accuracy.)
 //-- @param(Time_Span   The  duration  to  convert  to  a human readable
 //--                    representation.)
 //-- @param(Time_Unit   The  needed  unit (accuracy) of the output.  The
@@ -499,16 +589,30 @@ implementation
 
 
 uses
+{$IFDEF UNIX}
+   BaseUnix,
+{$IFNDEF USE_LIBC}
+   SysCall,
+{$ENDIF USE_LIBC}
+{$ENDIF UNIX}
    DateUtils;
 
 //const
 //   MODULE_PREFIX = 'Calendar.';
 
+{$IFDEF UNIX}
+   {$INCLUDE 'unix/gettimeofday.inc.pas'}
+{$ENDIF UNIX}
+
+const
+   // Absolute beginning of time. Big bang to say so.
+   BIG_BANG = tDateTime(0.0);
 
 const
    // The ticks constant for the conversions.
-   // Ticks per milliseconds shall define our base resolution.
-   TICKS_PER_MILLISECOND = 10; // 100 µs resolution shall be enough.
+   // Ticks per microsecond define our base resolution.
+   TICKS_PER_MICROSECOND = 10; // 100 ns resolution shall be enough.
+   TICKS_PER_MILLISECOND = 1000 *               TICKS_PER_MICROSECOND;
    TICKS_PER_SECOND      = MS_PER_SECOND      * TICKS_PER_MILLISECOND;
    TICKS_PER_MINUTE      = SECONDS_PER_MINUTE * TICKS_PER_SECOND;
    TICKS_PER_HOUR        = MINUTES_PER_HOUR   * TICKS_PER_MINUTE;
@@ -516,12 +620,14 @@ const
 
 
 const
-   Durations : array[Accuracy] of Duration =
-      ({ Days        } (Value : TICKS_PER_DAY),
-       { Hours       } (Value : TICKS_PER_HOUR),
-       { Minutes     } (Value : TICKS_PER_MINUTE),
-       { Seconds     } (Value : TICKS_PER_SECOND),
-       { Millisecond } (Value : TICKS_PER_MILLISECOND));
+   Durations : array[Accuracy] of Extended =
+      ({ Days         } 1.0 * TICKS_PER_DAY,
+       { Hours        } 1.0 * TICKS_PER_HOUR,
+       { Minutes      } 1.0 * TICKS_PER_MINUTE,
+       { Seconds      } 1.0 * TICKS_PER_SECOND,
+       { Milliseconds } 1.0 * TICKS_PER_MILLISECOND,
+       { Microseconds } 1.0 * TICKS_PER_MICROSECOND,
+       { Nanoseconds  } 1.0 * TICKS_PER_MICROSECOND / 1000.0);
 
 
 { -- Operators ------------------------------------------------------- }
@@ -643,6 +749,12 @@ begin
    Result.Value := Left.Value - Right.Value;
 end {"-"};
 
+operator - (const Left  : Duration;
+            const Right : Duration) : Duration; inline;
+begin
+   Result.Value := Left.Value - Right.Value;
+end {"-"};
+
 
 {/= "*" ==============================================================\}
 {                                                                      }
@@ -651,6 +763,12 @@ operator * (const Left  : Int64;
             const Right : Duration) : Duration; inline;
 begin
    Result.Value := Left * Right.Value;
+end {"*"};
+
+operator * (const Left  : Duration;
+            const Right : Int64) : Duration; inline;
+begin
+   Result.Value := Left.Value * Right;
 end {"*"};
 
 
@@ -670,8 +788,18 @@ end {"/"};
 {                                                                      }
 {\====================================================================/}
 function Clock : Time;
+{$IFDEF UNIX}
+var
+   This_Time : BaseUnix.tTimeVal;
+{$ENDIF UNIX}
 begin
+{$IFDEF UNIX}
+   GetTimeOfDay (This_Time, NIL);
+   exit (Time(Seconds      (This_Time.tv_sec) +
+              Microseconds (This_Time.tv_usec)));
+{$ELSE}
    exit (Time(Duration_Since (BIG_BANG)));
+{$ENDIF UNIX}
 end {Clock};
 
 
@@ -701,6 +829,24 @@ end {Sleep_Until};
 
 
 { -- Subroutines providing "constants" ------------------------------- }
+
+{/= ZERO_DURATION ====================================================\}
+{                                                                      }
+{\====================================================================/}
+function ZERO_DURATION : Duration; inline;
+begin
+   exit (Duration(0));
+end {ZERO_DURATION};
+
+
+{/= ZERO_TIME ========================================================\}
+{                                                                      }
+{\====================================================================/}
+function ZERO_TIME : Time; inline;
+begin
+   exit (Time(0));
+end {ZERO_TIME};
+
 
 {/= Days =============================================================\}
 {                                                                      }
@@ -747,6 +893,24 @@ begin
 end {Milliseconds};
 
 
+{/= Microseconds =====================================================\}
+{                                                                      }
+{\====================================================================/}
+function Microseconds (const Num_USecs : Discrete_Time) : Duration;
+begin
+   Result.Value := Num_USecs * TICKS_PER_MICROSECOND;
+end {Microseconds};
+
+
+{/= Nanoseconds ======================================================\}
+{                                                                      }
+{\====================================================================/}
+function Nanoseconds (const Num_NSecs : Discrete_Time) : Duration;
+begin
+   Result.Value := Num_NSecs * TICKS_PER_MICROSECOND div 1000;
+end {Nanoseconds};
+
+
 { -- Conversion subroutines ------------------------------------------ }
 
 {/= To_Duration ======================================================\}
@@ -767,7 +931,7 @@ end {To_Duration};
 function To_Time_Unit (const Time_Span : Duration;
                        const Time_Unit : Accuracy) : Discrete_Time;
 begin
-   exit (Round (1.0 * Time_Span.Value / Durations[Time_Unit].Value));
+   exit (Round (Time_Span.Value / Durations[Time_Unit]));
 end {To_Time_Unit};
 
 
@@ -816,12 +980,21 @@ begin
 end {Milliseconds};
 
 
+{/= Microseconds =====================================================\}
+{                                                                      }
+{\====================================================================/}
+function Microseconds (const Time_Span : Duration) : Discrete_Time;
+begin
+   exit (To_Time_Unit (Time_Span, acMicroseconds));
+end {Microseconds};
+
+
 {/= Nanoseconds ======================================================\}
 {                                                                      }
 {\====================================================================/}
 function Nanoseconds (const Time_Span : Duration) : Discrete_Time;
 begin
-   exit (Time_Span.Value * (1000 div TICKS_PER_MILLISECOND) * 1000);
+   exit (To_Time_Unit (Time_Span, acNanoseconds));
 end {Nanoseconds};
 
 
@@ -837,14 +1010,17 @@ function Image (const Time_Span : Duration;
 const
    HALF_A_MINUTE = DateUtils.OneMinute / 2.0;
    HALF_A_SECOND = DateUtils.OneSecond / 2.0;
+   HALF_A_MS     = DateUtils.OneMillisecond / 2.0;
    ZERO_TIME     = 0.0;
 const
    Round_Adjust : array[Accuracy] of tDateTime =
-     ({Days        } HALF_A_MINUTE,
-      {Hours       } HALF_A_MINUTE,
-      {Minutes     } HALF_A_MINUTE,
-      {Seconds     } HALF_A_SECOND,
-      {Milliseconds} ZERO_TIME);
+     ({ Days         } HALF_A_MINUTE,
+      { Hours        } HALF_A_MINUTE,
+      { Minutes      } HALF_A_MINUTE,
+      { Seconds      } HALF_A_SECOND,
+      { Milliseconds } HALF_A_MS,
+      { Microseconds } ZERO_TIME,
+      { Nanoseconds  } ZERO_TIME);
 var
    Days        : Integer;
    My_Duration : tDateTime;
