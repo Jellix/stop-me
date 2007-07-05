@@ -50,10 +50,17 @@ uses
    Perf_Image,
    SysUtils;
 
-const
-   ADDIE_BITS  = 10;
-   DATA_POINTS = 1000;
 
+// Can be used for parametrization
+const
+   ADDIE_BITS    = 10;
+   DATA_POINTS   = 1000;
+   IMG_FILE_NAME = 'test_image.png';
+
+
+{/= Run ==============================================================\}
+{                                                                      }
+{\====================================================================/}
 procedure Run;
 var
    My_Addie   : Addie.tAddie;
@@ -81,10 +88,10 @@ begin
       Img_Writer := FPWritePNG.tFPWriterPNG.Create;
 
       try
-         Image.SaveToFile ('test_image.png', Img_Writer);
+         Image.SaveToFile (IMG_FILE_NAME, Img_Writer);
       finally
-         Image.Free;
          Img_Writer.Free;
+         Image.Free;
       end {try};
    finally
       Perf_Img.Free;
@@ -92,9 +99,9 @@ begin
    end {try};
 end {Run};
 
-begin
+
+begin // Test_Image
    Run;
 end {Test_Image}.
 
 $Id$
-
