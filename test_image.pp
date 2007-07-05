@@ -44,6 +44,8 @@ uses
    Addie,
    Calendar,
    Classes,
+   FPImage,
+   FPWritePNG,
    LFSR,
    Perf_Image,
    SysUtils;
@@ -54,28 +56,40 @@ const
 
 procedure Run;
 var
-   My_Addie  : Addie.tAddie;
-   Perf_Img  : Perf_Image.Performance_Graph;
-   My_Stream : Classes.tStream;
-   i         : Integer;
+   My_Addie   : Addie.tAddie;
+   Image      : FPImage.tFPCustomImage;
+   Img_Writer : FPImage.tFPCustomImageWriter;
+   Perf_Img   : Perf_Image.Performance_Graph;
+   i          : Integer;
 begin
    My_Addie := Addie.tAddie.Create (LFSR.tRandom_64, ADDIE_BITS);
    Perf_Img := Perf_Image.Performance_Graph.Create (My_Addie);
-   Perf_Img.Start (Calendar.Milliseconds (10));
 
-   for i := 0 to Pred (DATA_POINTS) do
-   begin
-      My_Addie.Feed (Random > 0.9);
-      SysUtils.Sleep (1);
-   end {for};
+   try
+      Perf_Img.Start (Calendar.Milliseconds (10));
 
-   Perf_Img.Stop;
-   My_Stream := Classes.tFileStream.Create ('test_image.png',
-                                            Classes.fmCreate);
-   Perf_Img.Create_Image (My_Stream);
-   Perf_Img.Free;
-   My_Stream.Free;
-   My_Addie.Free;
+      for i := 0 to Pred (DATA_POINTS) do
+      begin
+         My_Addie.Feed (Random > 0.9);
+         SysUtils.Sleep (1);
+      end {for};
+
+      Perf_Img.Stop;
+
+      // Finally create the .png image.
+      Perf_Img.Create_Image (Image);
+      Img_Writer := FPWritePNG.tFPWriterPNG.Create;
+
+      try
+         Image.SaveToFile ('test_image.png', Img_Writer);
+      finally
+         Image.Free;
+         Img_Writer.Free;
+      end {try};
+   finally
+      Perf_Img.Free;
+      My_Addie.Free;
+   end {try};
 end {Run};
 
 begin

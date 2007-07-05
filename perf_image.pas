@@ -51,7 +51,8 @@ uses
    Addie,
    Calendar,
    Classes,
-   Contnrs;
+   Contnrs,
+   FPImage;
 
 
 type
@@ -96,9 +97,8 @@ type
       {\==============================================================/}
       //-- @abstract(Creates a performance graph of the data gathered so
       //--           far.)
-      //-- @param(Img_Data   The  stream  where  the  image data will be
-      //--                   written to. Complete with header etc.)
-      procedure Create_Image (const Img_Data : Classes.tStream);
+      //-- @param(Image   The "drawn" image. Must be freed by caller.)
+      procedure Create_Image (out Image : FPImage.tFPCustomImage);
 
    protected
       //-- @abstract(Reference to the monitored ADDIE's instance.)
@@ -120,9 +120,7 @@ uses
    Math,
    SysUtils,
    FPCanvas,
-   FPImage,
-   FPImgCanv,
-   FPWritePNG;
+   FPImgCanv;
 
 
 { -- a single performance record point --------------------------------}
@@ -266,10 +264,9 @@ end {Performance_Graph.Stop};
 {                                                                      }
 {\====================================================================/}
 procedure Performance_Graph.Create_Image (
-      const Img_Data : Classes.tStream);
+      out Image : FPImage.tFPCustomImage);
 var
    Canvas : FPCanvas.tFPCustomCanvas;
-   Img    : FPImage.tFPCustomImage;
 
    {/= Draw_Rule =====================================================\}
    {                                                                   }
@@ -283,9 +280,9 @@ var
                         const Lower     : Integer;
                         const Upper     : Integer);
    begin
-      Canvas.Pen.FPColor := Img.Palette[Col_Index];
-      Canvas.Line (0,                (Lower + Upper) div 2,
-                   Pred (Img.Width), (Lower + Upper) div 2);
+      Canvas.Pen.FPColor := Image.Palette[Col_Index];
+      Canvas.Line (0,                  (Lower + Upper) div 2,
+                   Pred (Image.Width), (Lower + Upper) div 2);
 
       // Break  out  of  recursion  if  color is too light or the pixel
       // distance between the lines becomes too small.
@@ -313,19 +310,19 @@ var
       Canvas.Pen.Width := 1;
 
       // Draw 10% rules with light color.
-      Canvas.Pen.fpColor := Img.Palette[Sub_Axis_Color];
+      Canvas.Pen.fpColor := Image.Palette[Sub_Axis_Color];
 
       for i := 0 to 10 do
       begin
-         y := Trunc ((0.1 * i) * Pred (Img.Height));
-         Canvas.Line (0, y, Pred (Img.Width), y);
+         y := Trunc ((0.1 * i) * Pred (Image.Height));
+         Canvas.Line (0, y, Pred (Image.Width), y);
       end {for};
 
       // Draw 50% rule with medium color.
-      Canvas.Pen.fpColor := Img.Palette[Main_Axis_Color];
+      Canvas.Pen.fpColor := Image.Palette[Main_Axis_Color];
 
-      y := Pred (Img.Height) div 2;
-      Canvas.Line (0, y, Pred (Img.Width), y);
+      y := Pred (Image.Height) div 2;
+      Canvas.Line (0, y, Pred (Image.Width), y);
    end {Draw_Y_Axis};
 
    {/= Set_Grayscale_Palette =========================================\}
@@ -352,49 +349,40 @@ var
    end {Set_Grayscale_Palette};
 
 var
-   Img_Writer  : FPImage.tFPCustomImageWriter;
    Data_Points : Integer;
    x           : Integer;
    y           : Integer;
 begin // Performance_Graph.Create_Image
    Data_Points := self.Perf_Data.Count;
 
-   Img := FPImage.tFPMemoryImage.Create (Data_Points,
-                                         2**self.My_Addie.Bits);
-   Canvas := FPImgCanv.tFPImageCanvas.Create (Img);
+   Image := FPImage.tFPMemoryImage.Create (Data_Points,
+                                           2**self.My_Addie.Bits);
+
+   Canvas := FPImgCanv.tFPImageCanvas.Create (Image);
 
    try
-      Set_Greyscale_Palette (Img.Palette);
+      Set_Greyscale_Palette (Image.Palette);
 
-      Draw_Y_Axis (Img.Palette.Count div 2, Img.Palette.Count div 4);
+      Draw_Y_Axis (Image.Palette.Count div 2,
+                   Image.Palette.Count div 4);
 
       // Draw the data lines.  An improved version would use antialiased
       // line drawing.
-      Canvas.Pen.fpColor := Img.Palette[Pred (Img.Palette.Count)];
+      Canvas.Pen.fpColor := Image.Palette[Pred (Image.Palette.Count)];
       Canvas.Pen.Mode    := FPCanvas.pmCopy;
       Canvas.Pen.Style   := FPCanvas.psSolid;
       Canvas.Pen.Width   := 1;
 
-      Canvas.MoveTo (0, Img.Height div 2);
+      Canvas.MoveTo (0, Image.Height div 2);
 
       for x := 0 to Pred (Data_Points) do
       begin
          y := Trunc ((1.0 - Data_Point(self.Perf_Data[x]).What) *
-                     Pred (Img.Height) + 0.5);
+                     Pred (Image.Height) + 0.5);
          Canvas.LineTo (x, y);
       end {for};
-
-      // Finally create the .png image.
-      Img_Writer := FPWritePNG.tFPWriterPNG.Create;
-
-      try
-         Img.SaveToStream (Img_Data, Img_Writer);
-      finally
-         Img_Writer.Free;
-      end {try};
    finally
       Canvas.Free;
-      Img.Free;
    end {try};
 end {Performance_Graph.Stop};
 
@@ -402,4 +390,3 @@ end {Performance_Graph.Stop};
 end {Perf_Image}.
 
 $Id$
-
