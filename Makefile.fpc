@@ -7,7 +7,7 @@ packages=paszlib
 
 [target]
 examples=test_addie test_image test_lfsr
-units=addie calendar lfsr perf_image prng
+units=addie calendar lfsr perf_measure perf_image prng
 
 
 [clean]

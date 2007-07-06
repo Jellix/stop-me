@@ -2,4 +2,5 @@ addie.pas
 calendar.pas
 lfsr.pas
 perf_image.pas
+perf_measure.pas
 prng.pas
