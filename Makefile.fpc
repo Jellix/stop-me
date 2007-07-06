@@ -6,10 +6,13 @@ version=0.0.2
 packages=paszlib
 
 [target]
-examples=test_addie test_image test_lfsr
+examples=examples/tests/test_addie examples/tests/test_image \
+  examples/tests/test_lfsr
 units=addie calendar lfsr perf_measure perf_image prng
 
 
 [clean]
 files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
-  html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png
+  html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png \
+  test_addie$(EXEEXT) test_image$(EXEEXT) test_lfsr$(EXEEXT)
+
