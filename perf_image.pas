@@ -57,18 +57,15 @@ uses
 
 type
    //-- @abstract(The actual performance graph object.)
-   //-- Values  retrieved from the connected addie are stored internally
-   //-- and will be converted to a real image on request.
+   //-- Can  convert  collected  performance  data  and convert it to an
+   //-- image.
    Performance_Graph = class (tObject)
    public
       {/= Create =====================================================\}
       {                                                                }
       {\==============================================================/}
       //-- @abstract(The usual constructor.)
-      //-- Just  "connects"  an  ADDIE  to the instance.  No performance
-      //-- monitoring will happen yet.
-      //-- @param(Element   The ADDIE to be monitored.)
-      constructor Create (const Element : Addie.tAddie);
+      constructor Create;
 
       {/= Destroy ====================================================\}
       {                                                                }
@@ -78,38 +75,21 @@ type
       //-- not) freed.
       destructor Destroy; override;
 
-      {/= Start ======================================================\}
-      {                                                                }
-      {\==============================================================/}
-      //-- @abstract(Starts monitoring the ADDIE's values.)
-      //-- @param(Cycle_Time   The  time in ms between successive stores
-      //--                     of the ADDIE's current probability.)
-      procedure Start (const Cycle_Time : Calendar.Duration); virtual;
-
-      {/= Stop =======================================================\}
-      {                                                                }
-      {\==============================================================/}
-      //-- @abstract(Stops monitoring the ADDIE's values.)
-      procedure Stop; virtual;
-
       {/= Create_Image ===============================================\}
       {                                                                }
       {\==============================================================/}
       //-- @abstract(Creates a performance graph of the data gathered so
       //--           far.)
-      //-- @param(Image   The "drawn" image. Must be freed by caller.)
-      procedure Create_Image (out Image : FPImage.tFPCustomImage);
-
-   protected
-      //-- @abstract(Reference to the monitored ADDIE's instance.)
-      My_Addie : Addie.tAddie;
-
-      //-- @abstract(Reference to the monitoring thread.)
-      Monitor : Classes.tThread;
-
-      //-- @abstract(The list of recorded data points.)
-      Perf_Data : Contnrs.tObjectList;
-
+      //-- @param(Perf_Data    A stream containg @code(Double)s.)
+      //-- @param(Resolution   The  bit  depth  of  the  ADDIE  used  to
+      //--                     collect  the data.  Used to determine the
+      //--                     image height.)
+      //-- @param(Image        The  "drawn"  image.  Must  be  freed  by
+      //--                     caller.)
+      procedure Create_Image (
+            const Perf_Data  : Classes.tStream;
+            const Resolution : Addie.tAddie_Bits;
+            out   Image      : FPImage.tFPCustomImage);
    end {Performance_Graph};
 
 
@@ -123,104 +103,14 @@ uses
    FPImgCanv;
 
 
-{ -- a single performance record point --------------------------------}
-
-type
-   Data_Point = class (tObject)
-   public
-      {/= Create =====================================================\}
-      {                                                                }
-      {\==============================================================/}
-      constructor Create (const AWhat : Double);
-
-   protected
-      What : Double;
-   end {Data_Point};
-
-
-{/= Create ===========================================================\}
-{                                                                      }
-{\====================================================================/}
-constructor Data_Point.Create (const AWhat : Double);
-begin
-   inherited Create;
-   self.What := AWhat;
-end {Data_Point.Create};
-
-
-{ -- the monitor thread -----------------------------------------------}
-type
-   Monitor_Task = class (Classes.tThread)
-   public
-      {/= Create =====================================================\}
-      {                                                                }
-      {\==============================================================/}
-      constructor Create (const Ref_Element : Addie.tAddie;
-                          const Cycle_Time  : Calendar.Duration;
-                          const Data_List   : Contnrs.tObjectList);
-
-   protected
-      {/= Execute ====================================================\}
-      {                                                                }
-      {\==============================================================/}
-      procedure Execute; override;
-
-      Monitored    : Addie.tAddie;
-      Sample_Cycle : Calendar.Duration;
-      Perf_List    : Contnrs.tObjectList;
-   end {Monitor_Task};
-
-
-{/= Monitor_Task.Create ==============================================\}
-{                                                                      }
-{\====================================================================/}
-constructor Monitor_Task.Create (
-      const Ref_Element : Addie.tAddie;
-      const Cycle_Time  : Calendar.Duration;
-      const Data_List   : Contnrs.tObjectList);
-begin
-   self.Monitored    := Ref_Element;
-   self.Sample_Cycle := Cycle_Time;
-   self.Perf_List    := Data_List;
-
-   inherited Create (False);
-end {Monitor_Task.Create};
-
-
-{/= Monitor_Task.Execute =============================================\}
-{                                                                      }
-{\====================================================================/}
-procedure Monitor_Task.Execute;
-var
-   Next_Time : Calendar.Time;
-begin
-   // Set up next time trigger first.
-   Next_Time := Calendar.Clock + self.Sample_Cycle;
-
-   while not self.Terminated do
-   begin
-      // Create  a new data point with ADDIE's probability and insert it
-      // into the list.
-      self.Perf_List.Add (
-            Data_Point.Create (self.Monitored.Probability));
-      Calendar.Sleep_Until (Next_Time);
-      Next_Time := Next_Time + self.Sample_Cycle;
-   end {while};
-end {Monitor_Task.Create};
-
-
-{ -- the exported performance graph class -----------------------------}
+{ -- Performance_Graph - the exported performance graph class ---------}
 
 {/= Performance_Graph.Create =========================================\}
 {                                                                      }
 {\====================================================================/}
-constructor Performance_Graph.Create (const Element : Addie.tAddie);
+constructor Performance_Graph.Create;
 begin
    inherited Create;
-   self.My_Addie  := Element;
-
-   self.Perf_Data := Contnrs.tObjectList.Create;
-   self.Perf_Data.OwnsObjects := True;
 end {Performance_Graph.Create};
 
 
@@ -229,42 +119,17 @@ end {Performance_Graph.Create};
 {\====================================================================/}
 destructor Performance_Graph.Destroy;
 begin
-   self.Stop; // Stop possibly running monitor thread.
-   self.Perf_Data.Free;
    inherited Destroy;
 end {Performance_Graph.Destroy};
-
-
-{/= Performance_Graph.Start ==========================================\}
-{                                                                      }
-{\====================================================================/}
-procedure Performance_Graph.Start (
-      const Cycle_Time : Calendar.Duration);
-begin
-   if Assigned (self.Monitor) then
-      SysUtils.FreeAndNil (self.Monitor);
-
-   self.Monitor := Monitor_Task.Create (self.My_Addie,
-                                        Cycle_Time,
-                                        self.Perf_Data);
-end {Performance_Graph.Start};
-
-
-{/= Performance_Graph.Stop ===========================================\}
-{                                                                      }
-{\====================================================================/}
-procedure Performance_Graph.Stop;
-begin
-   if Assigned (self.Monitor) then
-      SysUtils.FreeAndNil (self.Monitor);
-end {Performance_Graph.Stop};
 
 
 {/= Performance_Graph.Create_Image ===================================\}
 {                                                                      }
 {\====================================================================/}
 procedure Performance_Graph.Create_Image (
-      out Image : FPImage.tFPCustomImage);
+      const Perf_Data  : Classes.tStream;
+      const Resolution : Addie.tAddie_Bits;
+      out   Image      : FPImage.tFPCustomImage);
 var
    Canvas : FPCanvas.tFPCustomCanvas;
 
@@ -349,14 +214,14 @@ var
    end {Set_Grayscale_Palette};
 
 var
-   Data_Points : Integer;
+   Num_Samples : Integer;
+   Sample      : Double;
    x           : Integer;
    y           : Integer;
 begin // Performance_Graph.Create_Image
-   Data_Points := self.Perf_Data.Count;
+   Num_Samples := Perf_Data.Size div SizeOf (Double);
 
-   Image := FPImage.tFPMemoryImage.Create (Data_Points,
-                                           2**self.My_Addie.Bits);
+   Image := FPImage.tFPMemoryImage.Create (Num_Samples, 2**Resolution);
 
    Canvas := FPImgCanv.tFPImageCanvas.Create (Image);
 
@@ -375,16 +240,19 @@ begin // Performance_Graph.Create_Image
 
       Canvas.MoveTo (0, Image.Height div 2);
 
-      for x := 0 to Pred (Data_Points) do
+      Perf_Data.Seek (0, Classes.soFromBeginning);
+
+      for x := 0 to Pred (Num_Samples) do
       begin
-         y := Trunc ((1.0 - Data_Point(self.Perf_Data[x]).What) *
-                     Pred (Image.Height) + 0.5);
+         Perf_Data.Read (Sample, SizeOf (Sample));
+
+         y := Trunc ((1.0 - Sample) * Pred (Image.Height) + 0.5);
          Canvas.LineTo (x, y);
       end {for};
    finally
       Canvas.Free;
    end {try};
-end {Performance_Graph.Stop};
+end {Performance_Graph.Create_Image};
 
 
 end {Perf_Image}.

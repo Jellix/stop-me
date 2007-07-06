@@ -11,5 +11,5 @@ units=addie calendar lfsr perf_image prng
 
 
 [clean]
-files=*.png $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
+files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
   html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png

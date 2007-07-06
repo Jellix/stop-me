@@ -45,9 +45,12 @@ uses
    Calendar,
    Classes,
    FPImage,
+   FPWriteBMP,
+   FPWriteJPEG,
    FPWritePNG,
    LFSR,
    Perf_Image,
+   Perf_Measure,
    SysUtils;
 
 
@@ -55,7 +58,7 @@ uses
 const
    ADDIE_BITS    = 10;
    DATA_POINTS   = 1000;
-   IMG_FILE_NAME = 'test_image.png';
+   IMG_FILE_NAME = 'test_image'; // No extension here.
 
 
 {/= Run ==============================================================\}
@@ -63,17 +66,17 @@ const
 {\====================================================================/}
 procedure Run;
 var
-   My_Addie   : Addie.tAddie;
-   Image      : FPImage.tFPCustomImage;
-   Img_Writer : FPImage.tFPCustomImageWriter;
-   Perf_Img   : Perf_Image.Performance_Graph;
-   i          : Integer;
+   My_Addie : Addie.tAddie;
+   Image    : FPImage.tFPCustomImage;
+   Measure  : Perf_Measure.Data_Collector;
+   Perf_Img : Perf_Image.Performance_Graph;
+   i        : Integer;
 begin
    My_Addie := Addie.tAddie.Create (LFSR.tRandom_64, ADDIE_BITS);
-   Perf_Img := Perf_Image.Performance_Graph.Create (My_Addie);
+   Measure  := Perf_Measure.Data_Collector.Create (My_Addie);
 
    try
-      Perf_Img.Start (Calendar.Milliseconds (10));
+      Measure.Start (Calendar.Milliseconds (10));
 
       for i := 0 to Pred (DATA_POINTS) do
       begin
@@ -81,20 +84,26 @@ begin
          SysUtils.Sleep (1);
       end {for};
 
-      Perf_Img.Stop;
+      Measure.Stop;
 
-      // Finally create the .png image.
-      Perf_Img.Create_Image (Image);
-      Img_Writer := FPWritePNG.tFPWriterPNG.Create;
+      Perf_Img := Perf_Image.Performance_Graph.Create;
 
       try
-         Image.SaveToFile (IMG_FILE_NAME, Img_Writer);
+         // Finally create the image.
+         Perf_Img.Create_Image (Measure.Data_Points, ADDIE_BITS, Image);
+
+         try
+            Image.SaveToFile (IMG_FILE_NAME + '.bmp');
+            Image.SaveToFile (IMG_FILE_NAME + '.jpeg');
+            Image.SaveToFile (IMG_FILE_NAME + '.png');
+         finally
+            Image.Free;
+         end {try};
       finally
-         Img_Writer.Free;
-         Image.Free;
+         Perf_Img.Free;
       end {try};
    finally
-      Perf_Img.Free;
+      Measure.Free;
       My_Addie.Free;
    end {try};
 end {Run};
