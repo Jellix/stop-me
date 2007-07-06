@@ -38,8 +38,6 @@
 
 //-- @abstract(Implements  some sort of performance graph to display the
 //--           values fed to an ADDIE over time.)
-//-- Uses  tasking,  but  has  by no means real time properties,  so the
-//-- resulting graph will be much less than perfect.
 unit
    Perf_Image;
 
@@ -49,9 +47,7 @@ interface
 
 uses
    Addie,
-   Calendar,
    Classes,
-   Contnrs,
    FPImage;
 
 
@@ -97,7 +93,7 @@ implementation
 
 
 uses
-   Math,
+   Math, // Needed for ** operator only.
    SysUtils,
    FPCanvas,
    FPImgCanv;
@@ -193,7 +189,7 @@ var
    {/= Set_Grayscale_Palette =========================================\}
    {                                                                   }
    {\=================================================================/}
-   procedure Set_Greyscale_Palette (out Palette : FPImage.tFPPalette);
+   procedure Set_Grayscale_Palette (out Palette : FPImage.tFPPalette);
    var
       Col : FPImage.tFPColor;
       i   : Integer;
@@ -202,7 +198,7 @@ var
       Palette.Count := 256;
       Max := Pred (Palette.Count);
 
-      for i := 0 to Pred (Palette.Count) do
+      for i := 0 to Max do
       begin
          Col.Red   := Round (65535.0 * i / Max);
          Col.Green := Col.Red;
@@ -226,7 +222,7 @@ begin // Performance_Graph.Create_Image
    Canvas := FPImgCanv.tFPImageCanvas.Create (Image);
 
    try
-      Set_Greyscale_Palette (Image.Palette);
+      Set_Grayscale_Palette (Image.Palette);
 
       Draw_Y_Axis (Image.Palette.Count div 2,
                    Image.Palette.Count div 4);
