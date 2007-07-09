@@ -56,7 +56,8 @@ uses
    FPWritePNG,
    LFSR,
    Perf_Image,
-   Perf_Measure;
+   Perf_Measure,
+   PRNG;
 
 
 const
@@ -104,23 +105,27 @@ var
    Vocal_Sample   : Classes.tStream;
 
 var
-   Data    : Classes.tMemoryStream;
-   Imager  : Perf_Image.Performance_Graph;
-   Image   : FPImage.tFPCustomImage;
-   Bit_Set : LongInt;
-   x       : Perf_Measure.Data_Sample;
-   i       : LongInt;
-   j       : Byte;
-   c       : Char;
+   Data             : Classes.tMemoryStream;
+   Imager           : Perf_Image.Performance_Graph;
+   Random_Generator : PRNG.tPRNG;
+   Image            : FPImage.tFPCustomImage;
+   Bit_Set          : LongInt;
+   x                : Perf_Measure.Data_Sample;
+   i                : LongInt;
+   j                : Byte;
+   c                : Char;
 
 begin
    Data := Classes.tMemoryStream.Create;
    Data.LoadFromFile (ParamStr (1));
 
-   Letter_Counter := Addie.tAddie.Create (LFSR.tRandom_64, ADDIE_BITS);
+   // Create the (shared) PRNG instance.
+   Random_Generator := LFSR.tRandom_64.Create;
+
+   Letter_Counter := Addie.tAddie.Create (Random_Generator, ADDIE_BITS);
    Letter_Sample  := Classes.tMemoryStream.Create;
 
-   Vocal_Counter  := Addie.tAddie.Create (LFSR.tRandom_64, ADDIE_BITS);
+   Vocal_Counter  := Addie.tAddie.Create (Random_Generator, ADDIE_BITS);
    Vocal_Sample   := Classes.tMemoryStream.Create;
 
    try
@@ -175,6 +180,9 @@ begin
 
       Letter_Sample.Free;
       Letter_Counter.Free;
+
+      Random_Generator.Free;
+      Data.Free;
    end {try};
 end {Letter_Count}.
 
