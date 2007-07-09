@@ -55,6 +55,14 @@ uses
 
 
 type
+   //-- @abstract(A single sample.)
+   //-- As  the  range  of  a  sample  is  always between @code(0.0) and
+   //-- @code(1.0)  and  the original data has no better resolution than
+   //-- 32 bits  anyway,  we use the less memory consuming @code(Single)
+   //-- type here.
+   Data_Sample = type Single;
+
+type
    //-- @abstract(The actual performance measure object.)
    //-- Values  retrieved from the connected addie are stored internally
    //-- and can be retrieved on request.
@@ -93,8 +101,9 @@ type
 
    protected
       //-- @abstract(The list of recorded data points.)
-      //-- Each point is of type Double, so use SizeOf (Double) to index
-      //-- the elements
+      //-- Each  point  is  of  type  @link(Data_Sample),   so  use  the
+      //-- appropriate  @code(SizeOf (Data_Sample))  when  accessing the
+      //-- data.
       Perf_Data : Classes.tMemoryStream;
 
    public
@@ -163,7 +172,7 @@ end {Monitor_Task.Create};
 procedure Monitor_Task.Execute;
 var
    Next_Time : Calendar.Time;
-   Sample    : Double;
+   Sample    : Data_Sample;
 begin
    // Set up next time trigger first.
    Next_Time := Calendar.Clock + self.Sample_Cycle;

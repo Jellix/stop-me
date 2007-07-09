@@ -76,7 +76,12 @@ type
       {\==============================================================/}
       //-- @abstract(Creates a performance graph of the data gathered so
       //--           far.)
-      //-- @param(Perf_Data    A stream containg @code(Double)s.)
+      //-- The  created  image  will  have  a width corresponding to the
+      //-- number of data points and a height corresponding to the given
+      //-- bit  depth,  but  will  be restricted to 32767 pixels in each
+      //-- direction.
+      //-- @param(Perf_Data    A      stream      containing      @link(
+      //--                     Perf_Measure.Data_Sample)s.)
       //-- @param(Resolution   The  bit  depth  of  the  ADDIE  used  to
       //--                     collect  the data.  Used to determine the
       //--                     image height.)
@@ -93,7 +98,8 @@ implementation
 
 
 uses
-   Math, // Needed for ** operator only.
+   Math,
+   Perf_Measure,
    SysUtils,
    FPCanvas,
    FPImgCanv;
@@ -209,39 +215,79 @@ var
       end {for};
    end {Set_Grayscale_Palette};
 
+const
+   // Most  image libs ca not handle an image dimension > 32K,  so clamp
+   // the maximum supported bit depth to 15.
+   MAX_BIT_DEPTH = 15;
+
 var
-   Num_Samples : Integer;
-   Sample      : Double;
+   Num_Samples : LongInt;
+   Sample      : Perf_Measure.Data_Sample;
+   Img_Width   : Integer;
+   Img_Height  : Integer;
    x           : Integer;
    y           : Integer;
 begin // Performance_Graph.Create_Image
-   Num_Samples := Perf_Data.Size div SizeOf (Double);
+   // (Current) number of samples in data stream.
+   Num_Samples := Perf_Data.Size div SizeOf (Perf_Measure.Data_Sample);
 
-   Image := FPImage.tFPMemoryImage.Create (Num_Samples, 2**Resolution);
+   // Calculate image size with 32K - 1 restriction. This also restricts
+   // the maximum memory allocated for the image to less than 2 GiBi.
+   Img_Width  := Math.Min (Num_Samples,     Pred (2 ** MAX_BIT_DEPTH));
+   Img_Height := Math.Min (2 ** Resolution, Pred (2 ** MAX_BIT_DEPTH));
 
+   // Create plain empty image.
+   Image := FPImage.tFPMemoryImage.Create (Img_Width, Img_Height);
+
+   // Now the basic image has been created. Do a stupid sanity check and
+   // bail out if there is no sample at all.  This would create an image
+   // of  width  0.  Not  sure if the image handlers can actually handle
+   // that, but they surely should.
+   if Image.Width = 0 then
+      exit;
+
+   // Grayscale should be good enough. Of course, we could also do more
+   // colorful pictures. In fact, the preprocessing should be separated
+   // from the actual data line drawing.
+   Set_Grayscale_Palette (Image.Palette);
+
+   // Finally create the canvas drawing on the image.
    Canvas := FPImgCanv.tFPImageCanvas.Create (Image);
 
    try
-      Set_Grayscale_Palette (Image.Palette);
-
+      // Set up a simple Y scale.
       Draw_Y_Axis (Image.Palette.Count div 2,
                    Image.Palette.Count div 4);
 
+      //
       // Draw the data lines.  An improved version would use antialiased
       // line drawing.
+      //
+
       Canvas.Pen.fpColor := Image.Palette[Pred (Image.Palette.Count)];
       Canvas.Pen.Mode    := FPCanvas.pmCopy;
       Canvas.Pen.Style   := FPCanvas.psSolid;
       Canvas.Pen.Width   := 1;
 
-      Canvas.MoveTo (0, Image.Height div 2);
+      // If  there  were  more  than  32 Ki  samples,  only consider the
+      // newest ones.
+      // TODO: An  improved  version  could  split the images and create
+      //       several ones in a row instead of ignoring older data.
+      Perf_Data.Seek (SizeOf (Sample) * (Num_Samples - Img_Width),
+                      Classes.soFromBeginning);
 
-      Perf_Data.Seek (0, Classes.soFromBeginning);
+      // Set the initial position to that of the first sample.
+      Perf_Data.Read (Sample, SizeOf (Sample));
+      Canvas.MoveTo (0, Trunc ((1.0 - Sample) *
+                               Pred (Image.Height) + 0.5));
 
-      for x := 0 to Pred (Num_Samples) do
+      // The line drawing loop.
+      for x := 1 to Pred (Image.Width) do
       begin
          Perf_Data.Read (Sample, SizeOf (Sample));
 
+         // Image coordinates are top-left based, so we have to flip the
+         // Y values for the 100% being at the top.
          y := Trunc ((1.0 - Sample) * Pred (Image.Height) + 0.5);
          Canvas.LineTo (x, y);
       end {for};
