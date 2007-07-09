@@ -72,6 +72,22 @@ type
       constructor Create (const Random_Generator : PRNG.PRNG_Class;
                           const Bits             : tAddie_Bits = 8);
 
+      {/= Create =====================================================\}
+      {                                                                }
+      {\==============================================================/}
+      //-- @abstract(Creates object and initializes its internal state.)
+      //-- @param(Random_Generator   Pointer  to  an already initialized
+      //--                           PRNG.)
+      //-- @param(Bits               The   resolution  of  the  internal
+      //--                           counter.@br
+      //--                           The  more  bits  you  use, the more
+      //--                           precision  you  will  have, but the
+      //--                           more cycles you will wait until the
+      //--                           values finally start resembling the
+      //--                           input stream.)
+      constructor Create (const Random_Generator : PRNG.tPRNG;
+                          const Bits             : tAddie_Bits = 8);
+
       {/= Destroy ====================================================\}
       {                                                                }
       {\==============================================================/}
@@ -130,6 +146,11 @@ type
 
       //-- @abstract(The internal random stream object.)
       PRNG : PRNG.tPRNG;
+
+      //-- @abstract(Stores if the PRNG is local to the instance.)
+      //-- Flags if the PRNG has been initialized through the class
+      //-- pointer version of the constructor or not.
+      Owns_PRNG : Boolean;
    end {tAddie};
 
 
@@ -142,7 +163,22 @@ implementation
 constructor tAddie.Create (const Random_Generator : PRNG.PRNG_Class;
                            const Bits             : tAddie_Bits);
 begin
+   self.Create (Random_Generator.Create, Bits);
+
+   self.Owns_PRNG := True;
+end {tAddie.Create};
+
+
+{/= tAddie.Create ====================================================\}
+{                                                                      }
+{\====================================================================/}
+constructor tAddie.Create (const Random_Generator : PRNG.tPRNG;
+                           const Bits             : tAddie_Bits);
+begin
    inherited Create;
+
+   self.Owns_PRNG := False; // May  get overwritten by the other version
+                            // of the constructor.
 
    // set up internal state variables
    self.Num_Bits      := Bits;
@@ -151,7 +187,7 @@ begin
    self.Scaler        := 1.0 / self.Count_Mask;
 
    self.Reset;
-   self.PRNG := Random_Generator.Create;
+   self.PRNG := Random_Generator;
 end {tAddie.Create};
 
 
@@ -160,7 +196,9 @@ end {tAddie.Create};
 {\====================================================================/}
 destructor tAddie.Destroy;
 begin
-   self.PRNG.Free;
+   if self.Owns_PRNG then
+      self.PRNG.Free;
+
    inherited Destroy;
 end {tAddie.Destroy};
 
