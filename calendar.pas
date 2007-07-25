@@ -36,7 +36,6 @@
 {\====================================================================/}
 {$MODE OBJFPC}
 {$INLINE ON}
-{.$DEFINE USE_LIBC}
 
 //-- @abstract(Provides some stuff regarding relative times (duration).)
 //-- Although it may appear otherwise, the accuracy of operations is not
@@ -587,18 +586,13 @@ implementation
 uses
 {$IFDEF UNIX}
    BaseUnix,
-{$IFNDEF USE_LIBC}
-   SysCall,
-{$ENDIF USE_LIBC}
+   Unix,
 {$ENDIF UNIX}
    DateUtils;
 
 //const
 //   MODULE_PREFIX = 'Calendar.';
 
-{$IFDEF UNIX}
-   {$INCLUDE 'unix/gettimeofday.inc.pas'}
-{$ENDIF UNIX}
 
 const
    // Absolute beginning of time. Big bang to say so.
@@ -790,7 +784,7 @@ var
 {$ENDIF UNIX}
 begin
 {$IFDEF UNIX}
-   GetTimeOfDay (This_Time, NIL);
+   Unix.fpGetTimeOfDay (@This_Time, NIL);
    exit (Time(Seconds      (This_Time.tv_sec) +
               Microseconds (This_Time.tv_usec)));
 {$ELSE}
