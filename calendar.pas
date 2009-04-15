@@ -429,7 +429,6 @@ function Seconds (const Num_Seconds : Discrete_Time) : Duration;
 function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
   overload;
 
-
 {/= Microseconds =====================================================\}
 {                                                                      }
 {\====================================================================/}
@@ -443,7 +442,6 @@ function Milliseconds (const Num_MSecs : Discrete_Time) : Duration;
 //-- @returns(The duration of given number of microseconds.)
 function Microseconds (const Num_USecs : Discrete_Time) : Duration;
   overload;
-
 
 {/= Nanoseconds ======================================================\}
 {                                                                      }
@@ -515,7 +513,6 @@ function Hours (const Time_Span : Duration) : Discrete_Time;
 function Minutes (const Time_Span : Duration) : Discrete_Time;
   overload;
 
-
 {/= Seconds ==========================================================\}
 {                                                                      }
 {\====================================================================/}
@@ -538,7 +535,6 @@ function Seconds (const Time_Span : Duration) : Discrete_Time;
 function Milliseconds (const Time_Span : Duration) : Discrete_Time;
   overload;
 
-
 {/= Microseconds =====================================================\}
 {                                                                      }
 {\====================================================================/}
@@ -547,7 +543,6 @@ function Milliseconds (const Time_Span : Duration) : Discrete_Time;
 //-- @returns(Number of microseconds specified by the @code(Time_Span).)
 function Microseconds (const Time_Span : Duration) : Discrete_Time;
   overload;
-
 
 {/= Nanoseconds ======================================================\}
 {                                                                      }
