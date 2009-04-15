@@ -67,8 +67,6 @@ type
       {                                                                }
       {\==============================================================/}
       //-- @abstract(Cleans up the instance.)
-      //-- Stops any running monitor thread. The ADDIE itself is @bold(
-      //-- not) freed.
       destructor Destroy; override;
 
       {/= Create_Image ===============================================\}
