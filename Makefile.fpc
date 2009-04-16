@@ -5,15 +5,16 @@ version=0.2.0
 [require]
 packages=paszlib
 
+[compiler]
+sourcedir=src
+
 [target]
 examples=examples/letter_count examples/tests/test_addie \
   examples/tests/test_image examples/tests/test_lfsr
 units=addie calendar lfsr perf_measure perf_image prng
-
 
 [clean]
 files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
   html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png \
   letter_count$(EXEEXT) test_addie$(EXEEXT) test_image$(EXEEXT) \
   test_lfsr$(EXEEXT)
-

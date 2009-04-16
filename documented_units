@@ -1,6 +1,6 @@
-addie.pas
-calendar.pas
-lfsr.pas
-perf_image.pas
-perf_measure.pas
-prng.pas
+src/addie.pas
+src/calendar.pas
+src/lfsr.pas
+src/perf_image.pas
+src/perf_measure.pas
+src/prng.pas
