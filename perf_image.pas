@@ -193,7 +193,7 @@ var
    {/= Set_Grayscale_Palette =========================================\}
    {                                                                   }
    {\=================================================================/}
-   procedure Set_Grayscale_Palette (out Palette : FPImage.tFPPalette);
+   procedure Set_Grayscale_Palette (var Palette : FPImage.tFPPalette);
    var
       Col : FPImage.tFPColor;
       i   : Integer;
