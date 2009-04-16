@@ -815,12 +815,16 @@ end {Sleep_Until};
 
 { -- Subroutines providing "constants" ------------------------------- }
 
+// Fix for fpc 2.2.2+, type casting constants to record types is not allowed anymore.
+const
+   INT64_ZERO : Int64 = 0;
+
 {/= ZERO_DURATION ====================================================\}
 {                                                                      }
 {\====================================================================/}
 function ZERO_DURATION : Duration; inline;
 begin
-   exit (Duration(0));
+   exit (Duration(INT64_ZERO));
 end {ZERO_DURATION};
 
 
@@ -829,7 +833,7 @@ end {ZERO_DURATION};
 {\====================================================================/}
 function ZERO_TIME : Time; inline;
 begin
-   exit (Time(0));
+   exit (Time(INT64_ZERO));
 end {ZERO_TIME};
 
 
