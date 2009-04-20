@@ -4,7 +4,7 @@
 { regular intervals.                                                   }
 { Part of the Stop-Me (STOchastic Performance MEasurement) project.    }
 {                                                                      }
-{ Copyright (C) 2007 by Johnny L. Fencey                               }
+{ Copyright (C) 2007, 2009 by Johnny L. Fencey                         }
 {                                                                      }
 { This program is free software; you can redistribute it and/or modify }
 { it under the terms of the GNU General Public License as published by }
@@ -28,9 +28,9 @@
 { e-mail    : c.sucks@jlfencey.com                                     }
 {                                                                      }
 { snail-mail: Mr. Vinzent Hoefler                                      }
-{             Drangsalengaessli 5                                      }
-{             CH-3360 Herzogenbuchsee                                  }
-{             Switzerland, Europe, Earth, Solar System, Milky Way      }
+{             Ahornstrasse 14                                          }
+{             D-59423 Unna                                             }
+{             FR Germany, Europe, Earth, Solar System, Milky Way       }
 {                                                                      }
 { Special proprietary licenses may be available.                       }
 {                                                                      }

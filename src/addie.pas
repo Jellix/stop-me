@@ -3,7 +3,7 @@
 { Implements an Adaptive Digital Element (ADDIE).                      }
 { Part of the Stop-Me (STOchastic Performance MEasurement) project.    }
 {                                                                      }
-{ Copyright (C) 2005, 2006 by Johnny L. Fencey                         }
+{ Copyright (C) 2005, 2006, 2009 by Johnny L. Fencey                   }
 {                                                                      }
 { This program is free software; you can redistribute it and/or modify }
 { it under the terms of the GNU General Public License as published by }
@@ -27,16 +27,16 @@
 { e-mail    : c.sucks@jlfencey.com                                     }
 {                                                                      }
 { snail-mail: Mr. Vinzent Hoefler                                      }
-{             Drangsalengaessli 5                                      }
-{             CH-3360 Herzogenbuchsee                                  }
-{             Switzerland, Europe, Earth, Solar System, Milky Way      }
+{             Ahornstrasse 14                                          }
+{             D-59423 Unna                                             }
+{             FR Germany, Europe, Earth, Solar System, Milky Way       }
 {                                                                      }
 { Special proprietary licenses may be available.                       }
 {                                                                      }
 {\====================================================================/}
 {$MODE OBJFPC}
 
-//-- @abstract(Implements  the  ADDIE  as  described  in the accompanied
+//-- @abstract(Implements  the  ADDiE  as  described  in the accompanied
 //--           PDF.)
 unit
    Addie;
@@ -50,11 +50,11 @@ uses
 
 
 type
-   //-- @abstract(The ADDIE's possible range of counter sizes.)
+   //-- @abstract(The ADDiE's possible range of counter sizes.)
    tAddie_Bits = 2 .. 32;
 
 type
-   //-- @abstract(ADDIE implementation.)
+   //-- @abstract(ADDiE implementation.)
    tAddie = class (tObject)
    public
       {/= Create =====================================================\}
@@ -112,8 +112,8 @@ type
       {/= Reset ======================================================\}
       {                                                                }
       {\==============================================================/}
-      //-- @abstract(Resets the internal counter to prepare for new data
-      //--           stream.)
+      //-- @abstract(Resets  the  internal  counter to prepare for a new
+      //--           data stream.)
       procedure Reset; virtual;
 
    protected
@@ -125,11 +125,11 @@ type
 
    public
       //-- @abstract(Returns the current counter.)
-      //-- Which is the same as @link(Probability), but in raw internal
+      //-- Which is the same as @link(Probability),  but in raw internal
       //-- binary notation.
       property Counter : DWord read Count;
       
-      //-- @abstract(Returns the ADDIE's bit depth.)
+      //-- @abstract(Returns the ADDiE's bit depth.)
       property Bits : tAddie_Bits read Num_Bits;
 
    protected
@@ -148,7 +148,7 @@ type
       PRNG : PRNG.tPRNG;
 
       //-- @abstract(Stores if the PRNG is local to the instance.)
-      //-- Flags if the PRNG has been initialized through the class
+      //-- Flags  if  the  PRNG  has  been initialized through the class
       //-- pointer version of the constructor or not.
       Owns_PRNG : Boolean;
    end {tAddie};
@@ -212,7 +212,7 @@ procedure tAddie.Feed (const Stream_Bit : Boolean);
 var
    Counter_Bit : Boolean;
 begin
-   // compare a new value from the PRNG with the current counter
+   // Compare a new value from the PRNG with the current counter.
    Counter_Bit := (self.Count     and self.Count_Mask) >=
                   (self.PRNG.Next and self.Count_Mask);
 
@@ -255,4 +255,3 @@ end {tAddie.Reset};
 end {tAddie}.
 
 $Id$
-

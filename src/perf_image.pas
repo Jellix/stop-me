@@ -3,7 +3,7 @@
 { Performance graph for an ADDIE.                                      }
 { Part of the Stop-Me (STOchastic Performance MEasurement) project.    }
 {                                                                      }
-{ Copyright (C) 2006, 2007 by Johnny L. Fencey                         }
+{ Copyright (C) 2006, 2007, 2009 by Johnny L. Fencey                   }
 {                                                                      }
 { This program is free software; you can redistribute it and/or modify }
 { it under the terms of the GNU General Public License as published by }
@@ -27,9 +27,9 @@
 { e-mail    : c.sucks@jlfencey.com                                     }
 {                                                                      }
 { snail-mail: Mr. Vinzent Hoefler                                      }
-{             Drangsalengaessli 5                                      }
-{             CH-3360 Herzogenbuchsee                                  }
-{             Switzerland, Europe, Earth, Solar System, Milky Way      }
+{             Ahornstrasse 14                                          }
+{             D-59423 Unna                                             }
+{             FR Germany, Europe, Earth, Solar System, Milky Way       }
 {                                                                      }
 { Special proprietary licenses may be available.                       }
 {                                                                      }
@@ -53,8 +53,7 @@ uses
 
 type
    //-- @abstract(The actual performance graph object.)
-   //-- Can  convert  collected  performance  data  and convert it to an
-   //-- image.
+   //-- Can convert collected performance data into an image.
    Performance_Graph = class (tObject)
    public
       {/= Create =====================================================\}
@@ -214,7 +213,7 @@ var
    end {Set_Grayscale_Palette};
 
 const
-   // Most  image libs ca not handle an image dimension > 32K,  so clamp
+   // Most  image libs can not handle an image dimension > 32K, so clamp
    // the maximum supported bit depth to 15.
    MAX_BIT_DEPTH = 15;
 
