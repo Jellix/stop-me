@@ -13,6 +13,15 @@ examples=examples/letter_count examples/tests/test_addie \
   examples/tests/test_image examples/tests/test_lfsr
 units=addie calendar lfsr perf_measure perf_image prng
 
+[rules]
+doc:
+	-pasdoc$(EXEEXT) -E html_doc -S documented_units \
+  --title="stop-me Documentation" --marker=-- --use-tipue-search \
+  --visible-members=published,public,protected,private --graphviz-uses \
+  --graphviz-classes --link-gv-uses=png --link-gv-classes=png -DPAS_DOC
+	-dot -Tpng html_doc/GVUses.dotty > html_doc/GVUses.png
+	-dot -Tpng html_doc/GVClasses.dotty > html_doc/GVClasses.png
+
 [clean]
 files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
   html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png \
