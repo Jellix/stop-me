@@ -19,8 +19,8 @@ doc:
   --title="stop-me Documentation" --marker=-- --use-tipue-search \
   --visible-members=published,public,protected,private --graphviz-uses \
   --graphviz-classes --link-gv-uses=png --link-gv-classes=png -DPAS_DOC
-	-dot -Tpng html_doc/GVUses.dotty > html_doc/GVUses.png
-	-dot -Tpng html_doc/GVClasses.dotty > html_doc/GVClasses.png
+	-dot -Tpng html_doc/GVUses.dot > html_doc/GVUses.png
+	-dot -Tpng html_doc/GVClasses.dot > html_doc/GVClasses.png
 
 [clean]
 files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
