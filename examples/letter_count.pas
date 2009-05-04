@@ -28,9 +28,9 @@
 { e-mail    : c.sucks@jlfencey.com                                     }
 {                                                                      }
 { snail-mail: Mr. Vinzent Hoefler                                      }
-{             Drangsalengaessli 5                                      }
-{             CH-3360 Herzogenbuchsee                                  }
-{             Switzerland, Europe, Earth, Solar System, Milky Way      }
+{             Ahornstrasse 14                                          }
+{             D-59423 Unna                                             }
+{             FR Germany, Europe, Earth, Solar System, Milky Way       }
 {                                                                      }
 { Special proprietary licenses may be available.                       }
 {                                                                      }
