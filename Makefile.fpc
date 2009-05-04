@@ -7,11 +7,14 @@ packages=paszlib
 
 [compiler]
 sourcedir=src
+sourcedir=agg-pas/src
+unitdir=src
+unitdir=agg-pas/src
 
 [target]
 examples=examples/letter_count examples/tests/test_addie \
   examples/tests/test_image examples/tests/test_lfsr
-units=addie calendar lfsr perf_measure perf_image prng
+units=addie calendar lfsr perf_measure Agg2D perf_image prng
 
 [rules]
 doc:

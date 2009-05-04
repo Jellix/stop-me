@@ -46,6 +46,8 @@ interface
 
 
 uses
+   Agg2D,
+   Agg_Bitmap,
    Addie,
    Classes,
    FPImage;
@@ -130,87 +132,45 @@ procedure Performance_Graph.Create_Image (
       const Resolution : Addie.tAddie_Bits;
       out   Image      : FPImage.tFPCustomImage);
 var
-   Canvas : FPCanvas.tFPCustomCanvas;
-
-   {/= Draw_Rule =====================================================\}
-   {                                                                   }
-   { Recursive rule drawer. Not used anymore.                          }
-   {                                                                   }
-   { Would   draw  [50%, [25%, [12.5%, 37.5%]], [75%, [62.5%, 87.5%]]] }
-   { and so on lines in ever lighter grayscale.                        }
-   {                                                                   }
-   {\=================================================================/}
-   procedure Draw_Rule (const Col_Index : Integer;
-                        const Lower     : Integer;
-                        const Upper     : Integer);
-   begin
-      Canvas.Pen.FPColor := Image.Palette[Col_Index];
-      Canvas.Line (0,                  (Lower + Upper) div 2,
-                   Pred (Image.Width), (Lower + Upper) div 2);
-
-      // Break  out  of  recursion  if  color is too light or the pixel
-      // distance between the lines becomes too small.
-      if (Col_Index > 16) and ((Upper - Lower) > 8) then
-      begin
-         Draw_Rule (Col_Index div 2, Lower, (Lower + Upper) div 2);
-         Draw_Rule (Col_Index div 2, (Lower + Upper) div 2, Upper);
-      end {if};
-   end {Draw_Rule};
+   Canvas : Agg2D.tAgg2D;
 
    {/= Draw_Y_Axis ===================================================\}
    {                                                                   }
    { Draws the main Y axis at 50% and some lighter ones at 10% steps.  }
    {                                                                   }
    {\=================================================================/}
-   procedure Draw_Y_Axis (Main_Axis_Color : Integer;
-                          Sub_Axis_Color  : Integer);
+   procedure Draw_Y_Axis;
+   const
+      LINES = 10; // 10% lines.
    var
       i : Integer;
-      y : Integer;
+      x : Double;
+      y : Double;
    begin
+      Canvas.LineColor (0, 0, 0);
+
       // General settings.
-      Canvas.Pen.Mode  := FPCanvas.pmCopy;
-      Canvas.Pen.Style := FPCanvas.psDot;
-      Canvas.Pen.Width := 1;
+      // Draw 10% rules (half width lines).
+      Canvas.LineWidth (0.5);
 
-      // Draw 10% rules with light color.
-      Canvas.Pen.fpColor := Image.Palette[Sub_Axis_Color];
+      x := 0.0;
 
-      for i := 0 to 10 do
+      for i := 0 to LINES do
       begin
-         y := Trunc ((0.1 * i) * Pred (Image.Height));
-         Canvas.Line (0, y, Pred (Image.Width), y);
+         y := ((1.0 * i) / LINES) * Image.Height;
+         Canvas.AlignPoint (x, y);
+         Canvas.Line (0.0, y, Image.Width, y);
       end {for};
 
-      // Draw 50% rule with medium color.
-      Canvas.Pen.fpColor := Image.Palette[Main_Axis_Color];
+      // Draw 50% rule with full line.
+      Canvas.LineWidth (1.0);
 
-      y := Pred (Image.Height) div 2;
-      Canvas.Line (0, y, Pred (Image.Width), y);
+      y := Image.Height / 2.0;
+      Canvas.AlignPoint (x, y);
+      Canvas.Line (0.0, y, Image.Width, y);
+
+      Canvas.ResetPath;
    end {Draw_Y_Axis};
-
-   {/= Set_Grayscale_Palette =========================================\}
-   {                                                                   }
-   {\=================================================================/}
-   procedure Set_Grayscale_Palette (var Palette : FPImage.tFPPalette);
-   var
-      Col : FPImage.tFPColor;
-      i   : Integer;
-      Max : Integer; // Just to optimize those "Pred (Palette.Count)"s.
-   begin
-      Palette.Count := 256;
-      Max := Pred (Palette.Count);
-
-      for i := 0 to Max do
-      begin
-         Col.Red   := Round (65535.0 * i / Max);
-         Col.Green := Col.Red;
-         Col.Blue  := Col.Red;
-         Col.Alpha := FPImage.AlphaOpaque;
-
-         Palette[Max - i] := Col;
-      end {for};
-   end {Set_Grayscale_Palette};
 
 const
    // Most  image libs can not handle an image dimension > 32K, so clamp
@@ -223,48 +183,40 @@ var
    Img_Width   : Integer;
    Img_Height  : Integer;
    x           : Integer;
-   y           : Integer;
 begin // Performance_Graph.Create_Image
    // (Current) number of samples in data stream.
    Num_Samples := Perf_Data.Size div SizeOf (Perf_Measure.Data_Sample);
 
    // Calculate image size with 32K - 1 restriction. This also restricts
-   // the maximum memory allocated for the image to less than 2 GiBi.
+   // the maximum memory allocated for the image to less than 4 GiBi.
    Img_Width  := Math.Min (Num_Samples,     Pred (2 ** MAX_BIT_DEPTH));
    Img_Height := Math.Min (2 ** Resolution, Pred (2 ** MAX_BIT_DEPTH));
 
    // Create plain empty image.
-   Image := FPImage.tFPMemoryImage.Create (Img_Width, Img_Height);
+   Image := Agg_Bitmap.tAggBitmap.Create (Img_Width, Img_Height);
 
    // Now the basic image has been created. Do a stupid sanity check and
    // bail out if there is no sample at all.  This would create an image
    // of  width  0.  Not  sure if the image handlers can actually handle
    // that, but they surely should.
-   if Image.Width = 0 then
+   if not Assigned (Image) or (Image.Width = 0) then
       exit;
 
-   // Grayscale should be good enough. Of course, we could also do more
-   // colorful pictures. In fact, the preprocessing should be separated
-   // from the actual data line drawing.
-   Set_Grayscale_Palette (Image.Palette);
-
-   // Finally create the canvas drawing on the image.
-   Canvas := FPImgCanv.tFPImageCanvas.Create (Image);
-
+   Canvas := Agg2D.tAgg2D.Create;
+   
    try
+      // Y-Axis is inverted, so flip image per default.
+      Canvas.Attach (Image as Agg_Bitmap.tAggBitmap, True);
+
+      // White "background".
+      Canvas.ClearAll (255, 255, 255);
+
       // Set up a simple Y scale.
-      Draw_Y_Axis (Image.Palette.Count div 2,
-                   Image.Palette.Count div 4);
+      Draw_Y_Axis;
 
-      //
-      // Draw the data lines.  An improved version would use antialiased
-      // line drawing.
-      //
-
-      Canvas.Pen.fpColor := Image.Palette[Pred (Image.Palette.Count)];
-      Canvas.Pen.Mode    := FPCanvas.pmCopy;
-      Canvas.Pen.Style   := FPCanvas.psSolid;
-      Canvas.Pen.Width   := 1;
+      // Draw the data lines.
+      Canvas.LineColor (0, 0, 0);
+      Canvas.LineWidth (1);
 
       // If  there  were  more  than  32 Ki  samples,  only consider the
       // newest ones.
@@ -275,19 +227,17 @@ begin // Performance_Graph.Create_Image
 
       // Set the initial position to that of the first sample.
       Perf_Data.Read (Sample, SizeOf (Sample));
-      Canvas.MoveTo (0, Trunc ((1.0 - Sample) *
-                               Pred (Image.Height) + 0.5));
+      Canvas.MoveTo (0, Sample * Img_Height);
 
       // The line drawing loop.
-      for x := 1 to Pred (Image.Width) do
+      for x := 0 to Pred (Img_Width) do
       begin
          Perf_Data.Read (Sample, SizeOf (Sample));
-
-         // Image coordinates are top-left based, so we have to flip the
-         // Y values for the 100% being at the top.
-         y := Trunc ((1.0 - Sample) * Pred (Image.Height) + 0.5);
-         Canvas.LineTo (x, y);
+         Canvas.LineTo (x, Sample * Img_Height);
       end {for};
+
+      Canvas.LineTo (Img_Width, Sample * Img_Height);
+      Canvas.DrawPath (Agg2D.AGG_StrokeOnly);
    finally
       Canvas.Free;
    end {try};
