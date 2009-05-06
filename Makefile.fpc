@@ -26,7 +26,8 @@ doc:
 	-dot -Tpng html_doc/GVClasses.dot > html_doc/GVClasses.png
 
 [clean]
-files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o html_doc/*.css \
-  html_doc/*.gif html_doc/*.html html_doc/*.js html_doc/*.png \
+files=*.bmp *.png *.jpeg $(COMPILER_UNITTARGETDIR)/*.o \
+  html_doc/*.css html_doc/*.dot html_doc/*.gif html_doc/*.html \
+  html_doc/*.js html_doc/*.png \
   letter_count$(EXEEXT) test_addie$(EXEEXT) test_image$(EXEEXT) \
   test_lfsr$(EXEEXT)
